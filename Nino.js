@@ -1,4 +1,3 @@
-```js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 
 import {
@@ -399,9 +398,7 @@ function showSection(section) {
         Upgrade kostet
         <strong>${upgradeCost}</strong> Tokens.
       </p>
-      <p>Deine Klickstärke: ${(
-        power * petMultiplier
-      ).toFixed(2)}</p>
+      <p>Deine Klickstärke: ${(power * petMultiplier).toFixed(2)}</p>
       <button id="buyUpgrade">Upgrade kaufen</button>
     `;
 
@@ -535,4 +532,3 @@ if ($("logoutButton")) {
     }
   });
 }
-```
