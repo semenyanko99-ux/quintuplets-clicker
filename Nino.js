@@ -242,3 +242,6 @@ $("logoutButton").addEventListener("click", async () => {
   await saveGame();
   await signOut(auth);
 });
+
+funktion getRebirthCost() {
+  return Math.floor(100000 * Math.pow(1.2, rebirths));
