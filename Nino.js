@@ -1,4 +1,4 @@
-
+```js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 
 import {
@@ -16,7 +16,10 @@ import {
   setDoc
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-// Firebase
+// ========================================
+// FIREBASE
+// ========================================
+
 const firebaseConfig = {
   apiKey: "AIzaSyAx1i5oHWj34s-9a8dbK7Gbh_EzkZ0I4bY",
   authDomain: "quintessentialclicker.firebaseapp.com",
@@ -30,16 +33,24 @@ const db = getFirestore(app);
 
 const $ = id => document.getElementById(id);
 
-// Spielvariablen
+// ========================================
+// SPIELVARIABLEN
+// ========================================
+
 let tokens = 0;
 let power = 1;
 let upgradeCost = 10;
 let petMultiplier = 1;
 let petRarity = "Kein Pet";
 let username = "";
+
 let ready = false;
 let busy = false;
 let saveQueue = Promise.resolve();
+
+// ========================================
+// HILFSFUNKTIONEN
+// ========================================
 
 function message(text) {
   const element = $("authMessage");
@@ -47,7 +58,10 @@ function message(text) {
 }
 
 function update() {
-  if ($("tokens")) $("tokens").textContent = tokens;
+  if ($("tokens")) {
+    $("tokens").textContent = Math.floor(tokens);
+  }
+
   if ($("power")) {
     $("power").textContent = Number(
       (power * petMultiplier).toFixed(2)
@@ -56,7 +70,8 @@ function update() {
 }
 
 function usernameToEmail(name) {
-  return name.toLowerCase() + "@quintupletsclicker.example.com";
+  return name.toLowerCase() +
+    "@quintupletsclicker.example.com";
 }
 
 function validUsername(name) {
@@ -74,120 +89,151 @@ function defaultPlayerData(name) {
   };
 }
 
+// ========================================
 // REGISTRIEREN
-$("registerButton").addEventListener("click", async () => {
-  if (busy) return;
+// ========================================
 
-  const name = $("username").value.trim();
-  const password = $("password").value;
+if ($("registerButton")) {
+  $("registerButton").addEventListener("click", async () => {
+    if (busy) return;
 
-  if (!validUsername(name)) {
-    message("Benutzername: 3–16 Buchstaben, Zahlen oder _.");
-    return;
-  }
+    const name = $("username")?.value.trim() || "";
+    const password = $("password")?.value || "";
 
-  if (password.length < 6) {
-    message("Das Passwort muss mindestens 6 Zeichen haben.");
-    return;
-  }
-
-  busy = true;
-  $("registerButton").disabled = true;
-  message("Konto wird erstellt …");
-
-  try {
-    const credential = await createUserWithEmailAndPassword(
-      auth,
-      usernameToEmail(name),
-      password
-    );
-
-    await setDoc(
-      doc(db, "users", credential.user.uid),
-      defaultPlayerData(name)
-    );
-
-    message("Konto erstellt!");
-
-  } catch (error) {
-    console.error("Registrierungsfehler:", error);
-
-    if (error.code === "auth/email-already-in-use") {
-      message("Dieser Benutzername ist bereits vergeben.");
-    } else if (error.code === "auth/operation-not-allowed") {
-      message("Aktiviere E-Mail/Passwort in Firebase Authentication.");
-    } else {
-      message("Konto konnte nicht erstellt werden: " + error.code);
+    if (!validUsername(name)) {
+      message(
+        "Benutzername: 3–16 Buchstaben, Zahlen oder _."
+      );
+      return;
     }
 
-  } finally {
-    busy = false;
-    $("registerButton").disabled = false;
-  }
-});
+    if (password.length < 6) {
+      message("Das Passwort muss mindestens 6 Zeichen haben.");
+      return;
+    }
 
+    busy = true;
+    $("registerButton").disabled = true;
+    message("Konto wird erstellt …");
+
+    try {
+      const credential = await createUserWithEmailAndPassword(
+        auth,
+        usernameToEmail(name),
+        password
+      );
+
+      await setDoc(
+        doc(db, "users", credential.user.uid),
+        defaultPlayerData(name)
+      );
+
+      message("Konto erstellt!");
+
+    } catch (error) {
+      console.error("Registrierungsfehler:", error);
+
+      if (error.code === "auth/email-already-in-use") {
+        message("Dieser Benutzername ist bereits vergeben.");
+      } else if (
+        error.code === "auth/operation-not-allowed"
+      ) {
+        message(
+          "Aktiviere E-Mail/Passwort in Firebase Authentication."
+        );
+      } else {
+        message(
+          "Konto konnte nicht erstellt werden: " + error.code
+        );
+      }
+
+    } finally {
+      busy = false;
+      $("registerButton").disabled = false;
+    }
+  });
+}
+
+// ========================================
 // ANMELDEN
-$("authForm").addEventListener("submit", async event => {
-  event.preventDefault();
-  if (busy) return;
+// ========================================
 
-  const name = $("username").value.trim();
-  const password = $("password").value;
+if ($("authForm")) {
+  $("authForm").addEventListener("submit", async event => {
+    event.preventDefault();
 
-  if (!validUsername(name)) {
-    message("Bitte gib einen gültigen Benutzernamen ein.");
-    return;
-  }
+    if (busy) return;
 
-  if (!password) {
-    message("Bitte gib dein Passwort ein.");
-    return;
-  }
+    const name = $("username")?.value.trim() || "";
+    const password = $("password")?.value || "";
 
-  busy = true;
-  message("Anmeldung läuft …");
-
-  try {
-    await signInWithEmailAndPassword(
-      auth,
-      usernameToEmail(name),
-      password
-    );
-
-    message("Anmeldung erfolgreich!");
-
-  } catch (error) {
-    console.error("Anmeldefehler:", error);
-
-    if (
-      error.code === "auth/invalid-credential" ||
-      error.code === "auth/wrong-password" ||
-      error.code === "auth/user-not-found"
-    ) {
-      message("Benutzername oder Passwort ist falsch.");
-    } else if (error.code === "auth/operation-not-allowed") {
-      message("E-Mail/Passwort-Anmeldung ist in Firebase nicht aktiviert.");
-    } else {
-      message("Anmeldung fehlgeschlagen: " + error.code);
+    if (!validUsername(name)) {
+      message("Bitte gib einen gültigen Benutzernamen ein.");
+      return;
     }
 
-  } finally {
-    busy = false;
-  }
-});
+    if (!password) {
+      message("Bitte gib dein Passwort ein.");
+      return;
+    }
 
+    busy = true;
+    message("Anmeldung läuft …");
+
+    try {
+      await signInWithEmailAndPassword(
+        auth,
+        usernameToEmail(name),
+        password
+      );
+
+      message("Anmeldung erfolgreich!");
+
+    } catch (error) {
+      console.error("Anmeldefehler:", error);
+
+      if (
+        error.code === "auth/invalid-credential" ||
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/user-not-found"
+      ) {
+        message("Benutzername oder Passwort ist falsch.");
+      } else if (
+        error.code === "auth/operation-not-allowed"
+      ) {
+        message(
+          "E-Mail/Passwort-Anmeldung ist in Firebase nicht aktiviert."
+        );
+      } else {
+        message(
+          "Anmeldung fehlgeschlagen: " + error.code
+        );
+      }
+
+    } finally {
+      busy = false;
+    }
+  });
+}
+
+// ========================================
 // SPIELSTAND LADEN
+// ========================================
+
 onAuthStateChanged(auth, async user => {
   ready = false;
 
   if (!user) {
-    $("authPanel").hidden = false;
-    $("gamePanel").hidden = true;
+    if ($("authPanel")) $("authPanel").hidden = false;
+    if ($("gamePanel")) $("gamePanel").hidden = true;
+
     username = "";
     return;
   }
 
-  $("saveStatus").textContent = "Spielstand wird geladen …";
+  if ($("saveStatus")) {
+    $("saveStatus").textContent = "Spielstand wird geladen …";
+  }
 
   try {
     const ref = doc(db, "users", user.uid);
@@ -197,8 +243,9 @@ onAuthStateChanged(auth, async user => {
       await setDoc(
         ref,
         defaultPlayerData(
-          user.displayName ||
-          (user.email ? user.email.split("@")[0] : "Spieler")
+          user.email
+            ? user.email.split("@")[0]
+            : "Spieler"
         )
       );
 
@@ -210,30 +257,48 @@ onAuthStateChanged(auth, async user => {
     username = data.username || "Spieler";
     tokens = Number.isFinite(data.tokens) ? data.tokens : 0;
     power = Number.isFinite(data.power) ? data.power : 1;
+
     upgradeCost = Number.isFinite(data.upgradeCost)
-      ? data.upgradeCost : 10;
+      ? data.upgradeCost
+      : 10;
+
     petMultiplier = Number.isFinite(data.petMultiplier)
-      ? data.petMultiplier : 1;
+      ? data.petMultiplier
+      : 1;
+
     petRarity = data.petRarity || "Kein Pet";
 
     update();
 
-    $("playerName").textContent = username;
-    $("authPanel").hidden = true;
-    $("gamePanel").hidden = false;
-    $("saveStatus").textContent = "☁️ Spielstand geladen!";
+    if ($("playerName")) {
+      $("playerName").textContent = username;
+    }
+
+    if ($("authPanel")) $("authPanel").hidden = true;
+    if ($("gamePanel")) $("gamePanel").hidden = false;
+
+    if ($("saveStatus")) {
+      $("saveStatus").textContent = "☁️ Spielstand geladen!";
+    }
 
     ready = true;
 
   } catch (error) {
     console.error("Ladefehler:", error);
-    $("saveStatus").textContent =
-      "❌ Laden fehlgeschlagen: " + error.code;
+
+    if ($("saveStatus")) {
+      $("saveStatus").textContent =
+        "❌ Laden fehlgeschlagen: " + error.code;
+    }
   }
 });
 
-// SPIELSTAND SPEICHERN – nur einmal definiert
-{
+// ========================================
+// SPIELSTAND SPEICHERN
+// Diese Funktion darf nur einmal existieren!
+// ========================================
+
+function saveGame() {
   if (!auth.currentUser || !ready) {
     return Promise.resolve(false);
   }
@@ -247,9 +312,10 @@ onAuthStateChanged(auth, async user => {
   saveQueue = saveQueue
     .catch(() => {})
     .then(async () => {
-      if (auth.currentUser?.uid !== user.uid) return false;
+      if (auth.currentUser?.uid !== user.uid) {
+        return false;
+      }
 
-      // Aktuelle Werte erst beim tatsächlichen Speichern lesen.
       const data = {
         username,
         tokens,
@@ -265,12 +331,15 @@ onAuthStateChanged(auth, async user => {
         { merge: true }
       );
 
-      if (auth.currentUser?.uid === user.uid && $("saveStatus")) {
-        $("saveStatus").textContent = "☁️ Spielstand gespeichert!";
+      if (
+        auth.currentUser?.uid === user.uid &&
+        $("saveStatus")
+      ) {
+        $("saveStatus").textContent =
+          "☁️ Spielstand gespeichert!";
       }
 
       return true;
-
     })
     .catch(error => {
       console.error("Speicherfehler:", error);
@@ -287,42 +356,57 @@ onAuthStateChanged(auth, async user => {
   return saveQueue;
 }
 
+// ========================================
 // KLICK-BUTTON
-$("clickButton").addEventListener("click", () => {
-  if (!ready || !auth.currentUser) return;
+// ========================================
 
-  tokens = Number(
-    (tokens + power * petMultiplier).toFixed(2)
-  );
+if ($("clickButton")) {
+  $("clickButton").addEventListener("click", () => {
+    if (!ready || !auth.currentUser) return;
 
-  update();
-  saveGame();
-});
+    tokens = Number(
+      (tokens + power * petMultiplier).toFixed(2)
+    );
 
+    update();
+    saveGame();
+  });
+}
+
+// ========================================
 // MENÜ-BUTTONS
+// ========================================
+
 document.querySelectorAll("[data-section]").forEach(button => {
   button.addEventListener("click", () => {
     showSection(button.dataset.section);
   });
 });
 
-// SHOP UND PETS
+// ========================================
+// SHOP, PETS, SKINS UND QUESTS
+// ========================================
+
 function showSection(section) {
   const content = $("content");
   if (!content) return;
 
+  // SHOP
   if (section === "shop") {
     content.innerHTML = `
       <h2>Shop 🛒</h2>
       <p>
         Upgrade kostet
-        <span id="upgradeCost">${upgradeCost}</span> Tokens.
+        <strong>${upgradeCost}</strong> Tokens.
       </p>
+      <p>Deine Klickstärke: ${(
+        power * petMultiplier
+      ).toFixed(2)}</p>
       <button id="buyUpgrade">Upgrade kaufen</button>
     `;
 
     $("buyUpgrade").addEventListener("click", () => {
-      if (!ready) return;
+      if (!ready || !auth.currentUser) return;
 
       if (tokens >= upgradeCost) {
         tokens -= upgradeCost;
@@ -332,15 +416,17 @@ function showSection(section) {
         update();
         saveGame();
         showSection("shop");
-
       } else {
-        alert("Du brauchst mindestens " + upgradeCost + " Tokens!");
+        alert(
+          "Du brauchst mindestens " + upgradeCost + " Tokens!"
+        );
       }
     });
 
+  // PETS
   } else if (section === "pets") {
     content.innerHTML = `
-      <h2>🎰 Pet Roulette</h2>
+      <h2>🎰 Pet-Roulette</h2>
 
       <p>Dein aktuelles Pet:
         <strong id="currentPet">${petRarity}</strong>
@@ -360,14 +446,16 @@ function showSection(section) {
         font-size:22px;
       ">🐣 Bereit?</div>
 
-      <button id="spinRoulette">🎰 Roulette drehen</button>
+      <button id="spinRoulette">
+        🎰 Roulette drehen
+      </button>
 
       <h3>Seltenheiten</h3>
       <p>🔵 Gojo: 50 % — ×1,2</p>
       <p>🟣 Marin: 20 % — ×2</p>
       <p>🟡 Alya: 15 % — ×4</p>
       <p>🔴 Futaro: 7 % — ×6</p>
-      <p>Die übrigen 8 %: kein Gewinn.</p>
+      <p>😢 Kein Pet: 8 %</p>
     `;
 
     $("spinRoulette").addEventListener("click", () => {
@@ -411,18 +499,40 @@ function showSection(section) {
       saveGame();
     });
 
+  // SKINS
   } else if (section === "skins") {
-    content.innerHTML =
-      "<h2>🎨 Skins</h2><p>Kommt bald!</p>";
+    content.innerHTML = `
+      <h2>🎨 Skins</h2>
+      <p>Neue Skins kommen bald!</p>
+    `;
 
+  // QUESTS
   } else if (section === "quests") {
-    content.innerHTML =
-      "<h2>📜 Quests</h2><p>Kommt bald!</p>";
+    content.innerHTML = `
+      <h2>📜 Quests</h2>
+      <p>Neue Quests kommen bald!</p>
+    `;
   }
 }
 
+// ========================================
 // ABMELDEN
-$("logoutButton").addEventListener("click", async () => {
-  await saveGame();
-  await signOut(auth);
-});
+// ========================================
+
+if ($("logoutButton")) {
+  $("logoutButton").addEventListener("click", async () => {
+    try {
+      await saveGame();
+      await signOut(auth);
+      message("Du wurdest abgemeldet.");
+    } catch (error) {
+      console.error("Abmeldefehler:", error);
+
+      if ($("saveStatus")) {
+        $("saveStatus").textContent =
+          "Abmelden fehlgeschlagen: " + error.code;
+      }
+    }
+  });
+}
+```
