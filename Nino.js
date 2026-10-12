@@ -323,16 +323,16 @@ function showSection(section) {
       let multiplier;
 
       if (result < 50) {
-        rarity = "🔵 Gojo";
+        rarity = "🔵 Rare";
         multiplier = 1.2;
       } else if (result < 70) {
-        rarity = "🟣 Marin";
+        rarity = "🟣 Epic";
         multiplier = 2;
       } else if (result < 85) {
-        rarity = "🟡 Alya";
+        rarity = "🟡 Legendary";
         multiplier = 4;
       } else if (result < 92) {
-        rarity = "🔴 Futaro";
+        rarity = "🔴 Mythisch";
         multiplier = 6;
       } else {
         $("rouletteResult").innerHTML =
