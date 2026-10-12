@@ -376,3 +376,55 @@ $("logoutButton").addEventListener("click", async () => {
   await saveGame();
   await signOut(auth);
 });
+
+
+function saveGame() {
+  if (!auth.currentUser || !ready) {
+    console.warn("Speichern nicht möglich: nicht angemeldet.");
+    return Promise.resolve(false);
+  }
+
+  const user = auth.currentUser;
+
+  const data = {
+    username,
+    tokens,
+    power,
+    upgradeCost,
+    petMultiplier,
+    petRarity
+  };
+
+  $("saveStatus").textContent = "Speichert …";
+
+  saveQueue = saveQueue
+    .catch(() => {})
+    .then(async () => {
+      if (auth.currentUser?.uid !== user.uid) {
+        return false;
+      }
+
+      await setDoc(
+        doc(db, "users", user.uid),
+        data,
+        { merge: true }
+      );
+
+      if (auth.currentUser?.uid === user.uid) {
+        $("saveStatus").textContent =
+          "☁️ Spielstand gespeichert!";
+      }
+
+      return true;
+    })
+    .catch(error => {
+      console.error("Speicherfehler:", error);
+
+      $("saveStatus").textContent =
+        "❌ Fehler: " + error.code;
+
+      return false;
+    });
+
+  return saveQueue;
+}
