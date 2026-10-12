@@ -233,7 +233,7 @@ onAuthStateChanged(auth, async user => {
 });
 
 // SPIELSTAND SPEICHERN – nur einmal definiert
-function saveGame() {
+{
   if (!auth.currentUser || !ready) {
     return Promise.resolve(false);
   }
