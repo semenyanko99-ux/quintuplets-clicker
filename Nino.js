@@ -1,6 +1,5 @@
 
-import { initializeApp } from
-  "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 
 import {
   getAuth,
@@ -43,25 +42,39 @@ let busy = false;
 let saveQueue = Promise.resolve();
 
 function message(text) {
-  $("authMessage").textContent = text;
+  const element = $("authMessage");
+  if (element) element.textContent = text;
 }
 
 function update() {
-  $("tokens").textContent = tokens;
-  $("power").textContent =
-    Number((power * petMultiplier).toFixed(2));
+  if ($("tokens")) $("tokens").textContent = tokens;
+  if ($("power")) {
+    $("power").textContent = Number(
+      (power * petMultiplier).toFixed(2)
+    );
+  }
 }
 
 function usernameToEmail(name) {
-  return name.toLowerCase() +
-    "@quintupletsclicker.example.com";
+  return name.toLowerCase() + "@quintupletsclicker.example.com";
 }
 
 function validUsername(name) {
   return /^[A-Za-z0-9_]{3,16}$/.test(name);
 }
 
-// Neues Konto erstellen
+function defaultPlayerData(name) {
+  return {
+    username: name || "Spieler",
+    tokens: 0,
+    power: 1,
+    upgradeCost: 10,
+    petMultiplier: 1,
+    petRarity: "Kein Pet"
+  };
+}
+
+// REGISTRIEREN
 $("registerButton").addEventListener("click", async () => {
   if (busy) return;
 
@@ -89,30 +102,31 @@ $("registerButton").addEventListener("click", async () => {
       password
     );
 
-    await setDoc(doc(db, "users", credential.user.uid), {
-      username: name,
-      tokens: 0,
-      power: 1,
-      upgradeCost: 10,
-      petMultiplier: 1,
-      petRarity: "Kein Pet"
-    });
+    await setDoc(
+      doc(db, "users", credential.user.uid),
+      defaultPlayerData(name)
+    );
 
     message("Konto erstellt!");
+
   } catch (error) {
-    console.error(error);
-    message(
-      error.code === "auth/email-already-in-use"
-        ? "Dieser Benutzername ist bereits vergeben."
-        : "Konto konnte nicht erstellt werden: " + error.code
-    );
+    console.error("Registrierungsfehler:", error);
+
+    if (error.code === "auth/email-already-in-use") {
+      message("Dieser Benutzername ist bereits vergeben.");
+    } else if (error.code === "auth/operation-not-allowed") {
+      message("Aktiviere E-Mail/Passwort in Firebase Authentication.");
+    } else {
+      message("Konto konnte nicht erstellt werden: " + error.code);
+    }
+
   } finally {
     busy = false;
     $("registerButton").disabled = false;
   }
 });
 
-// Anmelden
+// ANMELDEN
 $("authForm").addEventListener("submit", async event => {
   event.preventDefault();
   if (busy) return;
@@ -125,6 +139,11 @@ $("authForm").addEventListener("submit", async event => {
     return;
   }
 
+  if (!password) {
+    message("Bitte gib dein Passwort ein.");
+    return;
+  }
+
   busy = true;
   message("Anmeldung läuft …");
 
@@ -134,15 +153,30 @@ $("authForm").addEventListener("submit", async event => {
       usernameToEmail(name),
       password
     );
+
+    message("Anmeldung erfolgreich!");
+
   } catch (error) {
-    console.error(error);
-    message("Anmeldung fehlgeschlagen. Prüfe Name und Passwort.");
+    console.error("Anmeldefehler:", error);
+
+    if (
+      error.code === "auth/invalid-credential" ||
+      error.code === "auth/wrong-password" ||
+      error.code === "auth/user-not-found"
+    ) {
+      message("Benutzername oder Passwort ist falsch.");
+    } else if (error.code === "auth/operation-not-allowed") {
+      message("E-Mail/Passwort-Anmeldung ist in Firebase nicht aktiviert.");
+    } else {
+      message("Anmeldung fehlgeschlagen: " + error.code);
+    }
+
   } finally {
     busy = false;
   }
 });
 
-// Spielstand laden
+// SPIELSTAND LADEN
 onAuthStateChanged(auth, async user => {
   ready = false;
 
@@ -157,108 +191,128 @@ onAuthStateChanged(auth, async user => {
 
   try {
     const ref = doc(db, "users", user.uid);
-    const snapshot = await getDoc(ref);
+    let snapshot = await getDoc(ref);
 
-    // Fehlenden Spielstand anlegen
     if (!snapshot.exists()) {
-      await setDoc(ref, {
-        username: user.displayName || "Spieler",
-        tokens: 0,
-        power: 1,
-        upgradeCost: 10,
-        petMultiplier: 1,
-        petRarity: "Kein Pet"
-      });
+      await setDoc(
+        ref,
+        defaultPlayerData(
+          user.displayName ||
+          (user.email ? user.email.split("@")[0] : "Spieler")
+        )
+      );
+
+      snapshot = await getDoc(ref);
     }
 
-    const latestSnapshot = await getDoc(ref);
-    const data = latestSnapshot.data();
+    const data = snapshot.data();
 
     username = data.username || "Spieler";
     tokens = Number.isFinite(data.tokens) ? data.tokens : 0;
     power = Number.isFinite(data.power) ? data.power : 1;
-
     upgradeCost = Number.isFinite(data.upgradeCost)
-      ? data.upgradeCost
-      : 10;
-
+      ? data.upgradeCost : 10;
     petMultiplier = Number.isFinite(data.petMultiplier)
-      ? data.petMultiplier
-      : 1;
-
+      ? data.petMultiplier : 1;
     petRarity = data.petRarity || "Kein Pet";
 
     update();
+
     $("playerName").textContent = username;
     $("authPanel").hidden = true;
     $("gamePanel").hidden = false;
     $("saveStatus").textContent = "☁️ Spielstand geladen!";
 
     ready = true;
+
   } catch (error) {
-    console.error(error);
+    console.error("Ladefehler:", error);
     $("saveStatus").textContent =
-      "Laden fehlgeschlagen. Prüfe deine Firestore-Regeln.";
+      "❌ Laden fehlgeschlagen: " + error.code;
   }
 });
 
-// Spielstand speichern
+// SPIELSTAND SPEICHERN – nur einmal definiert
 function saveGame() {
   if (!auth.currentUser || !ready) {
-    return Promise.resolve();
+    return Promise.resolve(false);
   }
 
   const user = auth.currentUser;
 
-  const data = {
-    username,
-    tokens,
-    power,
-    upgradeCost,
-    petMultiplier,
-    petRarity
-  };
+  if ($("saveStatus")) {
+    $("saveStatus").textContent = "Speichert …";
+  }
 
-  $("saveStatus").textContent = "Speichert …";
+  saveQueue = saveQueue
+    .catch(() => {})
+    .then(async () => {
+      if (auth.currentUser?.uid !== user.uid) return false;
 
-  saveQueue = saveQueue.then(() =>
-    setDoc(doc(db, "users", user.uid), data, { merge: true })
-  ).then(() => {
-    if (auth.currentUser?.uid === user.uid) {
-      $("saveStatus").textContent =
-        "☁️ Spielstand gespeichert!";
-    }
-  }).catch(error => {
-    console.error(error);
-    $("saveStatus").textContent =
-      "Speichern fehlgeschlagen!";
-  });
+      // Aktuelle Werte erst beim tatsächlichen Speichern lesen.
+      const data = {
+        username,
+        tokens,
+        power,
+        upgradeCost,
+        petMultiplier,
+        petRarity
+      };
+
+      await setDoc(
+        doc(db, "users", user.uid),
+        data,
+        { merge: true }
+      );
+
+      if (auth.currentUser?.uid === user.uid && $("saveStatus")) {
+        $("saveStatus").textContent = "☁️ Spielstand gespeichert!";
+      }
+
+      return true;
+
+    })
+    .catch(error => {
+      console.error("Speicherfehler:", error);
+
+      if ($("saveStatus")) {
+        $("saveStatus").textContent =
+          "❌ Speichern fehlgeschlagen: " +
+          (error.code || error.message);
+      }
+
+      return false;
+    });
 
   return saveQueue;
 }
 
-// Klick-Button: Pet-Multiplikator berücksichtigen
+// KLICK-BUTTON
 $("clickButton").addEventListener("click", () => {
   if (!ready || !auth.currentUser) return;
 
-  tokens += power * petMultiplier;
-  tokens = Number(tokens.toFixed(2));
+  tokens = Number(
+    (tokens + power * petMultiplier).toFixed(2)
+  );
 
   update();
   saveGame();
 });
 
-// Menü-Buttons
+// MENÜ-BUTTONS
 document.querySelectorAll("[data-section]").forEach(button => {
   button.addEventListener("click", () => {
     showSection(button.dataset.section);
   });
 });
 
-// Shop und Pets
+// SHOP UND PETS
 function showSection(section) {
+  const content = $("content");
+  if (!content) return;
+
   if (section === "shop") {
-    $("content").innerHTML = `
+    content.innerHTML = `
       <h2>Shop 🛒</h2>
       <p>
         Upgrade kostet
@@ -272,45 +326,47 @@ function showSection(section) {
 
       if (tokens >= upgradeCost) {
         tokens -= upgradeCost;
-        power++;
-
+        power += 1;
         upgradeCost = Math.floor(upgradeCost * 2);
 
         update();
         saveGame();
         showSection("shop");
+
       } else {
-        alert(
-          "Du brauchst mindestens " + upgradeCost + " Tokens!"
-        );
+        alert("Du brauchst mindestens " + upgradeCost + " Tokens!");
       }
     });
 
   } else if (section === "pets") {
-    $("content").innerHTML = `
+    content.innerHTML = `
       <h2>🎰 Pet Roulette</h2>
-      <p>Dein aktuelles Pet: <strong>${petRarity}</strong></p>
-      <p>Dein Pet-Multiplikator: ×${petMultiplier}</p>
+
+      <p>Dein aktuelles Pet:
+        <strong id="currentPet">${petRarity}</strong>
+      </p>
+
+      <p>Dein Pet-Multiplikator:
+        ×<span id="currentMultiplier">${petMultiplier}</span>
+      </p>
 
       <div id="rouletteResult" style="
-        margin: 20px 0;
-        padding: 20px;
-        background: #20243a;
-        color: white;
-        border-radius: 12px;
-        text-align: center;
-        font-size: 22px;
-      ">
-        🐣 Bereit?
-      </div>
+        margin:20px 0;
+        padding:20px;
+        background:#20243a;
+        color:white;
+        border-radius:12px;
+        text-align:center;
+        font-size:22px;
+      ">🐣 Bereit?</div>
 
       <button id="spinRoulette">🎰 Roulette drehen</button>
 
       <h3>Seltenheiten</h3>
-      <p>🔵 Rare: 50 % — ×1,2</p>
-      <p>🟣 Epic: 20 % — ×2</p>
-      <p>🟡 Legendary: 15 % — ×4</p>
-      <p>🔴 Mythisch: 7 % — ×6</p>
+      <p>🔵 Gojo: 50 % — ×1,2</p>
+      <p>🟣 Marin: 20 % — ×2</p>
+      <p>🟡 Alya: 15 % — ×4</p>
+      <p>🔴 Futaro: 7 % — ×6</p>
       <p>Die übrigen 8 %: kein Gewinn.</p>
     `;
 
@@ -318,7 +374,6 @@ function showSection(section) {
       if (!ready || !auth.currentUser) return;
 
       const result = Math.random() * 100;
-
       let rarity;
       let multiplier;
 
@@ -335,12 +390,11 @@ function showSection(section) {
         rarity = "🔴 Futaro";
         multiplier = 6;
       } else {
-        $("rouletteResult").innerHTML =
+        $("rouletteResult").textContent =
           "😢 Kein Pet diesmal! Versuch es erneut.";
         return;
       }
 
-      // Neues Pet ausrüsten
       petRarity = rarity;
       petMultiplier = multiplier;
 
@@ -350,79 +404,24 @@ function showSection(section) {
         Multiplikator: ×${multiplier}
       `;
 
+      $("currentPet").textContent = petRarity;
+      $("currentMultiplier").textContent = petMultiplier;
+
       update();
       saveGame();
-
-      // Aktuelles Pet oben aktualisieren
-      const petInfo = $("content").querySelector("p");
-      if (petInfo) {
-        petInfo.innerHTML =
-          `Dein aktuelles Pet: <strong>${petRarity}</strong>`;
-      }
     });
 
   } else if (section === "skins") {
-    $("content").innerHTML =
+    content.innerHTML =
       "<h2>🎨 Skins</h2><p>Kommt bald!</p>";
 
   } else if (section === "quests") {
-    $("content").innerHTML =
+    content.innerHTML =
       "<h2>📜 Quests</h2><p>Kommt bald!</p>";
   }
 }
 
-function saveGame() {
-  if (!auth.currentUser || !ready) {
-    console.warn("Speichern nicht möglich: nicht angemeldet.");
-    return Promise.resolve(false);
-  }
-
-  const user = auth.currentUser;
-
-  const data = {
-    username,
-    tokens,
-    power,
-    upgradeCost,
-    petMultiplier,
-    petRarity
-  };
-
-  $("saveStatus").textContent = "Speichert …";
-
-  saveQueue = saveQueue
-    .catch(() => {})
-    .then(async () => {
-      if (auth.currentUser?.uid !== user.uid) {
-        return false;
-      }
-
-      await setDoc(
-        doc(db, "users", user.uid),
-        data,
-        { merge: true }
-      );
-
-      if (auth.currentUser?.uid === user.uid) {
-        $("saveStatus").textContent =
-          "☁️ Spielstand gespeichert!";
-      }
-
-      return true;
-    })
-    .catch(error => {
-      console.error("Speicherfehler:", error);
-
-      $("saveStatus").textContent =
-        "❌ Fehler: " + error.code;
-
-      return false;
-    });
-
-  return saveQueue;
-}
-
-// Abmelden
+// ABMELDEN
 $("logoutButton").addEventListener("click", async () => {
   await saveGame();
   await signOut(auth);
