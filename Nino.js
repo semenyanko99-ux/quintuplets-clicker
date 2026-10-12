@@ -215,19 +215,24 @@ function showSection(section) {
       <button id="buyUpgrade">Upgrade kaufen</button>
     `;
 
-    $("buyUpgrade").addEventListener("click", () => {
-      if (!ready) return;
+let upgradeCost = 25;
 
-      if (tokens >= 25) {
-        tokens -= 25;
+$("buyUpgrade").addEventListener("click", () => {
+    if (!ready) return;
+
+    if (tokens >= upgradeCost) {
+        tokens -= upgradeCost;
         power++;
+
+        upgradeCost = Math.floor(upgradeCost * 1.5);
+
         update();
         saveGame();
         showSection("shop");
-      } else {
-        alert("Du brauchst mindestens 25 Tokens!");
-      }
-    });
+    } else {
+        alert(`Du brauchst mindestens ${upgradeCost} Tokens!`);
+    }
+});
   } else if (section === "pets") {
     $("content").innerHTML = "<h2>🐱 Pets</h2><p>Kommt bald!</p>";
   } else if (section === "skins") {
