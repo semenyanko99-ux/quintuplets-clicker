@@ -12,7 +12,12 @@ import {
   getFirestore,
   doc,
   getDoc,
-  setDoc
+  setDoc,
+  collection,
+  query,
+  orderBy,
+  limit,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
 // ========================================
@@ -98,6 +103,56 @@ function resetPetState() {
 
   if ($("currentMultiplier")) {
     $("currentMultiplier").textContent = petMultiplier;
+  }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+async function renderLeaderboard() {
+  const listEl = $("leaderboardList");
+  if (!listEl) return;
+
+  try {
+    const q = query(
+      collection(db, "public_profiles"),
+      orderBy("tokens", "desc"),
+      limit(10)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      listEl.innerHTML = "<li>Keine Einträge</li>";
+      return;
+    }
+
+    listEl.innerHTML = snapshot.docs
+      .map((docSnap, index) => {
+        const data = docSnap.data();
+        const usernameValue = escapeHtml(data.username || "Spieler");
+        const scoreValue = Number.isFinite(data.tokens)
+          ? Math.floor(data.tokens)
+          : 0;
+
+        return `
+          <li>
+            <span class="rank">${index + 1}.</span>
+            <span class="name">${usernameValue}</span>
+            <span class="score">${scoreValue}</span>
+          </li>
+        `;
+      })
+      .join("");
+  } catch (error) {
+    console.error("Leaderboard laden fehlgeschlagen:", error);
+    listEl.innerHTML = "<li>Fehler beim Laden</li>";
   }
 }
 
@@ -294,6 +349,7 @@ onAuthStateChanged(auth, async user => {
       $("saveStatus").textContent = "☁️ Spielstand geladen!";
     }
 
+    await renderLeaderboard();
     ready = true;
 
   } catch (error) {
@@ -344,6 +400,19 @@ function savePlayerGame() {
         { merge: true }
       );
 
+      await setDoc(
+        doc(db, "public_profiles", user.uid),
+        {
+          username,
+          tokens
+        },
+        { merge: true }
+      );
+
+      if ($("leaderboardList")) {
+        await renderLeaderboard();
+      }
+
       if (
         auth.currentUser?.uid === user.uid &&
         $("saveStatus")
@@ -355,11 +424,11 @@ function savePlayerGame() {
       return true;
     })
     .catch(error => {
-      console.error("Sigma:", error);
+      console.error("Save failed:", error);
 
       if ($("saveStatus")) {
         $("saveStatus").textContent =
-          "Mango67" +
+          "Speichern fehlgeschlagen: " +
           (error.code || error.message);
       }
 
