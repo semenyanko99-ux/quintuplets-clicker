@@ -209,6 +209,7 @@ document.querySelectorAll("[data-section]").forEach(button => {
 
 
 
+
 function showSection(section) {
   if (section === "shop") {
     $("content").innerHTML = `
@@ -224,10 +225,14 @@ function showSection(section) {
         tokens -= upgradeCost;
         power++;
 
+        // Preis verdoppeln
         upgradeCost = Math.floor(upgradeCost * 2);
 
+        // Spiel aktualisieren und speichern
         update();
         saveGame();
+
+        // Shop neu anzeigen
         showSection("shop");
       } else {
         alert("Du brauchst mindestens " + upgradeCost + " Tokens!");
@@ -247,6 +252,7 @@ function showSection(section) {
       "<h2>📜 Quests</h2><p>Kommt bald!</p>";
   }
 }
+
 
 
 // Abmelden
