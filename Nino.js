@@ -88,6 +88,19 @@ function defaultPlayerData(name) {
   };
 }
 
+function resetPetState() {
+  petRarity = "Kein Pet";
+  petMultiplier = 1;
+
+  if ($("currentPet")) {
+    $("currentPet").textContent = petRarity;
+  }
+
+  if ($("currentMultiplier")) {
+    $("currentMultiplier").textContent = petMultiplier;
+  }
+}
+
 // ========================================
 // REGISTRIEREN
 // ========================================
@@ -227,6 +240,7 @@ onAuthStateChanged(auth, async user => {
     if ($("gamePanel")) $("gamePanel").hidden = true;
 
     username = "";
+    resetPetState();
     return;
   }
 
@@ -475,8 +489,12 @@ function showSection(section) {
         rarity = "🔴 Futaro";
         multiplier = 6;
       } else {
+        resetPetState();
         $("rouletteResult").textContent =
           "😢 Kein Pet diesmal! Versuch es erneut.";
+
+        update();
+        savePlayerGame();
         return;
       }
 
