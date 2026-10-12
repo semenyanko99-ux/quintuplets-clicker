@@ -119,6 +119,14 @@ async function renderLeaderboard() {
   const listEl = $("leaderboardList");
   if (!listEl) return;
 
+  listEl.innerHTML = "<li>Lädt...</li>";
+
+  const timeoutId = setTimeout(() => {
+    if (listEl.innerHTML.includes("Lädt")) {
+      listEl.innerHTML = "<li>Fehler beim Laden</li>";
+    }
+  }, 8000);
+
   try {
     const q = query(
       collection(db, "public_profiles"),
@@ -153,6 +161,16 @@ async function renderLeaderboard() {
   } catch (error) {
     console.error("Leaderboard laden fehlgeschlagen:", error);
     listEl.innerHTML = "<li>Fehler beim Laden</li>";
+
+    if (error?.code) {
+      const err = document.createElement("li");
+      err.style.fontSize = "12px";
+      err.style.opacity = "0.8";
+      err.textContent = "Fehler: " + error.code;
+      listEl.appendChild(err);
+    }
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -357,7 +375,7 @@ onAuthStateChanged(auth, async user => {
 
     if ($("saveStatus")) {
       $("saveStatus").textContent =
-        "❌ Laden fehlgeschlagen: " + error.code;
+        "❌ Laden fehlgeschlagen: " + (error?.code || error?.message || "Unbekannt");
     }
   }
 });
