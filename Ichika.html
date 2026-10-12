@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quintuplets Clicker 🌸</title>
+  <link rel="stylesheet" href="Miku.css">
+  <script type="module" src="Nino.js"></script>
+</head>
+<body>
+  <video class="background-video" autoplay muted loop playsinline>
+    <source src="the-quintessential-quintuplets.3840x2160.mp4"
+            type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+
+  <main class="game-container">
+    <h1>🌸 Quintuplets Clicker 🌸</h1>
+
+    <section id="authPanel">
+      <h2>Dein Konto</h2>
+      <form id="authForm">
+        <label for="username">Benutzername</label>
+        <input id="username" minlength="3" maxlength="16"
+               pattern="[A-Za-z0-9_]{3,16}" required
+               autocomplete="username" placeholder="Miku123">
+
+        <label for="password">Passwort</label>
+        <input id="password" type="password" minlength="6"
+               required autocomplete="current-password"
+               placeholder="Mindestens 6 Zeichen">
+
+        <button type="submit">Anmelden</button>
+        <button type="button" id="registerButton">
+          Konto erstellen
+        </button>
+      </form>
+      <p id="authMessage" role="status"></p>
+    </section>
+
+    <section id="gamePanel" hidden>
+      <p>Spieler: <strong id="playerName"></strong></p>
+
+      <div class="tokens">
+        🪙 Tokens: <span id="tokens">0</span>
+      </div>
+
+      <p>Tokens pro Klick: <span id="power">1</span></p>
+
+      <button id="clickButton">
+        <img src="Volume_7_clean_cover_art.webp"
+             alt="Miku" id="buttonImage">
+        <span>KLICKEN!</span>
+      </button>
+
+      <p id="saveStatus" role="status">Spielstand wird geladen …</p>
+
+      <nav>
+        <button data-section="shop">🛒 Shop</button>
+        <button data-section="pets">🐱 Pets</button>
+        <button data-section="skins">🎨 Skins</button>
+        <button data-section="quests">📜 Quests</button>
+      </nav>
+
+      <section class="section" id="content">
+        <h2>Willkommen!</h2>
+        <p>Klicke, um Tokens zu sammeln.</p>
+      </section>
+
+      <section class="section">
+        <h2>⭐ Dein Fortschritt</h2>
+        <p>Hier kommen später Level, Rebirth und Rangliste hin.</p>
+      </section>
+
+      <button id="logoutButton" class="secondary">
+        Abmelden
+      </button>
+    </section>
+  </main>
+</body>
+</html>
