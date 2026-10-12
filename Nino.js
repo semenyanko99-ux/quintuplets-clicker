@@ -298,7 +298,7 @@ onAuthStateChanged(auth, async user => {
 // Diese Funktion darf nur einmal existieren!
 // ========================================
 
-function saveGame() {
+function savePlayerGame() {
   if (!auth.currentUser || !ready) {
     return Promise.resolve(false);
   }
