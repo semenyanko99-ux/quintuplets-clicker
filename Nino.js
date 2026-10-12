@@ -210,7 +210,7 @@ document.querySelectorAll("[data-section]").forEach(button => {
 function showSection(section) {
   if (section === "shop") {
     $("content").innerHTML = `
-      <h2>🛒 Shop</h2>
+      <h2>Shop🛒</h2>
       <p>Upgrade kostet 25 Tokens.</p>
       <button id="buyUpgrade">Upgrade kaufen</button>
     `;
@@ -224,7 +224,7 @@ $("buyUpgrade").addEventListener("click", () => {
         tokens -= upgradeCost;
         power++;
 
-        upgradeCost = Math.floor(upgradeCost * 1.5);
+        upgradeCost = Math.floor(upgradeCost * 2);
 
         update();
         saveGame();
