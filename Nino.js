@@ -51,6 +51,7 @@ let username = "";
 let ready = false;
 let busy = false;
 let saveQueue = Promise.resolve();
+let leaderboardRefreshTimer = null;
 
 // ========================================
 // HILFSFUNKTIONEN
@@ -121,12 +122,6 @@ async function renderLeaderboard() {
 
   listEl.innerHTML = "<li>Lädt...</li>";
 
-  const timeoutId = setTimeout(() => {
-    if (listEl.innerHTML.includes("Lädt")) {
-      listEl.innerHTML = "<li>Fehler beim Laden</li>";
-    }
-  }, 8000);
-
   try {
     const q = query(
       collection(db, "public_profiles"),
@@ -169,9 +164,21 @@ async function renderLeaderboard() {
       err.textContent = "Fehler: " + error.code;
       listEl.appendChild(err);
     }
-  } finally {
-    clearTimeout(timeoutId);
   }
+}
+
+function scheduleLeaderboardRefresh() {
+  if (leaderboardRefreshTimer) {
+    clearTimeout(leaderboardRefreshTimer);
+  }
+
+  leaderboardRefreshTimer = setTimeout(async () => {
+    try {
+      await renderLeaderboard();
+    } catch (error) {
+      console.error("Leaderboard refresh failed:", error);
+    }
+  }, 5000);
 }
 
 // ========================================
@@ -427,9 +434,7 @@ function savePlayerGame() {
         { merge: true }
       );
 
-      if ($("leaderboardList")) {
-        await renderLeaderboard();
-      }
+      scheduleLeaderboardRefresh();
 
       if (
         auth.currentUser?.uid === user.uid &&
