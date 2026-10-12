@@ -376,4 +376,3 @@ $("logoutButton").addEventListener("click", async () => {
   await saveGame();
   await signOut(auth);
 });
-
