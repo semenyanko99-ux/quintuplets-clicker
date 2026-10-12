@@ -253,6 +253,7 @@ function showSection(section) {
   }
 }
 
+let upgradeCost = 10;
 
 
 // Abmelden
