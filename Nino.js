@@ -207,20 +207,20 @@ document.querySelectorAll("[data-section]").forEach(button => {
   });
 });
 
+
+
 function showSection(section) {
   if (section === "shop") {
     $("content").innerHTML = `
-      <h2>Shop🛒</h2>
-      <p>Upgrade kostet 25 Tokens.</p>
+      <h2>Shop 🛒</h2>
+      <p>Upgrade kostet <span id="upgradeCost">${upgradeCost}</span> Tokens.</p>
       <button id="buyUpgrade">Upgrade kaufen</button>
     `;
 
-let upgradeCost = 25;
+    $("buyUpgrade").addEventListener("click", () => {
+      if (!ready) return;
 
-$("buyUpgrade").addEventListener("click", () => {
-    if (!ready) return;
-
-    if (tokens >= upgradeCost) {
+      if (tokens >= upgradeCost) {
         tokens -= upgradeCost;
         power++;
 
@@ -229,18 +229,25 @@ $("buyUpgrade").addEventListener("click", () => {
         update();
         saveGame();
         showSection("shop");
-    } else {
-        alert(`Du brauchst mindestens ${upgradeCost} Tokens!`);
-    }
-});
+      } else {
+        alert("Du brauchst mindestens " + upgradeCost + " Tokens!");
+      }
+    });
+
   } else if (section === "pets") {
-    $("content").innerHTML = "<h2>🐱 Pets</h2><p>Kommt bald!</p>";
+    $("content").innerHTML =
+      "<h2>🐱 Pets</h2><p>Kommt bald!</p>";
+
   } else if (section === "skins") {
-    $("content").innerHTML = "<h2>🎨 Skins</h2><p>Kommt bald!</p>";
+    $("content").innerHTML =
+      "<h2>🎨 Skins</h2><p>Kommt bald!</p>";
+
   } else if (section === "quests") {
-    $("content").innerHTML = "<h2>📜 Quests</h2><p>Kommt bald!</p>";
+    $("content").innerHTML =
+      "<h2>📜 Quests</h2><p>Kommt bald!</p>";
   }
 }
+
 
 // Abmelden
 $("logoutButton").addEventListener("click", async () => {
