@@ -472,6 +472,17 @@ function showSection(section) {
     $("spinRoulette").addEventListener("click", () => {
       if (!ready || !auth.currentUser) return;
 
+      const petSpinCost = 1000;
+
+      if (tokens < petSpinCost) {
+        alert("Du brauchst mindestens 1000 Tokens, um das Roulette zu drehen!");
+        return;
+      }
+
+      tokens -= petSpinCost;
+      update();
+      savePlayerGame();
+
       const result = Math.random() * 100;
       let rarity;
       let multiplier;
