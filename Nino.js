@@ -355,11 +355,11 @@ function savePlayerGame() {
       return true;
     })
     .catch(error => {
-      console.error("Speicherfehler:", error);
+      console.error("Sigma:", error);
 
       if ($("saveStatus")) {
         $("saveStatus").textContent =
-          "❌ Speichern fehlgeschlagen: " +
+          "Mango67" +
           (error.code || error.message);
       }
 
