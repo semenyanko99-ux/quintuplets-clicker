@@ -369,7 +369,7 @@ if ($("clickButton")) {
     );
 
     update();
-    saveGame();
+    savePlayerGame();
   });
 }
 
@@ -414,7 +414,7 @@ function showSection(section) {
         upgradeCost = Math.floor(upgradeCost * 2);
 
         update();
-        saveGame();
+        savePlayerGame();
         showSection("shop");
       } else {
         alert(
@@ -496,7 +496,7 @@ function showSection(section) {
       $("currentMultiplier").textContent = petMultiplier;
 
       update();
-      saveGame();
+      savePlayerGame();
     });
 
   // SKINS
@@ -522,7 +522,7 @@ function showSection(section) {
 if ($("logoutButton")) {
   $("logoutButton").addEventListener("click", async () => {
     try {
-      await saveGame();
+      await savePlayerGame();
       await signOut(auth);
       message("Du wurdest abgemeldet.");
     } catch (error) {
