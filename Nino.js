@@ -106,9 +106,9 @@ let ready = false;
 let busy = false;
 let saveQueue = Promise.resolve();
 let leaderboardRefreshTimer = null;
-
 let quest = null;
 let questTimer = null;
+let questRefreshInterval = null;
 
 // ========================================
 // HILFSFUNKTIONEN
@@ -560,6 +560,8 @@ onAuthStateChanged(auth, async user => {
     applySkin(null);
     quest = null;
     if (questTimer) clearTimeout(questTimer);
+    if (questRefreshInterval) clearInterval(questRefreshInterval);
+    questRefreshInterval = null;
     return;
   }
 
@@ -922,6 +924,11 @@ function showSection(section) {
     renderSkinsUI($("skinsContainer"));
 
   } else if (section === "quests") {
+    if (questRefreshInterval) {
+      clearInterval(questRefreshInterval);
+      questRefreshInterval = null;
+    }
+
     ensureQuestActive();
 
     const currentTarget = quest ? quest.target : 0;
@@ -951,7 +958,7 @@ function showSection(section) {
     };
 
     refreshQuestText();
-    setInterval(refreshQuestText, 1000);
+    questRefreshInterval = setInterval(refreshQuestText, 1000);
   }
 }
 
