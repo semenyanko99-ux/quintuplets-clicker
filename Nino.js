@@ -48,6 +48,36 @@ let petMultiplier = 1;
 let petRarity = "Kein Pet";
 let username = "";
 
+let ownedSkins = [];
+let equippedSkin = null;
+
+const SKINS = [
+  {
+    id: "skin1",
+    name: "Skin 1",
+    price: 100000,
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/assets/skins/skin1.jpg"
+  },
+  {
+    id: "skin2",
+    name: "Skin 2",
+    price: 100000,
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/assets/skins/skin2.jpg"
+  },
+  {
+    id: "skin3",
+    name: "Skin 3",
+    price: 100000,
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/assets/skins/skin3.jpg"
+  },
+  {
+    id: "skin4",
+    name: "Skin 4",
+    price: 100000,
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/assets/skins/skin4.jpg"
+  }
+];
+
 let ready = false;
 let busy = false;
 let saveQueue = Promise.resolve();
@@ -90,7 +120,9 @@ function defaultPlayerData(name) {
     power: 1,
     upgradeCost: 10,
     petMultiplier: 1,
-    petRarity: "Kein Pet"
+    petRarity: "Kein Pet",
+    ownedSkins: [],
+    equippedSkin: null
   };
 }
 
@@ -114,6 +146,110 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function applySkin(skinId) {
+  const clickButton = $("clickButton");
+  if (!clickButton) return;
+
+  const selectedSkin = SKINS.find(skin => skin.id === skinId);
+
+  if (!selectedSkin) {
+    clickButton.style.backgroundImage = "";
+    clickButton.style.backgroundSize = "";
+    clickButton.style.backgroundPosition = "";
+    clickButton.style.border = "";
+    return;
+  }
+
+  clickButton.style.backgroundImage = `url('${selectedSkin.image}')`;
+  clickButton.style.backgroundSize = "cover";
+  clickButton.style.backgroundPosition = "center";
+  clickButton.style.border = "2px solid #ffd700";
+}
+
+function renderSkinsUI(container) {
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  SKINS.forEach(skin => {
+    const item = document.createElement("div");
+    item.style.margin = "10px 0";
+    item.style.padding = "10px";
+    item.style.border = "1px solid #444";
+    item.style.borderRadius = "12px";
+    item.style.display = "flex";
+    item.style.alignItems = "center";
+    item.style.justifyContent = "space-between";
+    item.style.gap = "12px";
+    item.style.background = "rgba(255,255,255,0.04)";
+
+    const imageWrap = document.createElement("div");
+    imageWrap.style.width = "80px";
+    imageWrap.style.height = "80px";
+    imageWrap.style.borderRadius = "10px";
+    imageWrap.style.overflow = "hidden";
+    imageWrap.style.background = "#111";
+
+    const img = document.createElement("img");
+    img.src = skin.image;
+    img.alt = skin.name;
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "cover";
+
+    imageWrap.appendChild(img);
+
+    const info = document.createElement("div");
+    info.style.flex = "1";
+    info.innerHTML = `
+      <strong>${skin.name}</strong><br>
+      <span>Preis: ${skin.price}</span>
+    `;
+
+    const action = document.createElement("button");
+    const hasSkin = ownedSkins.includes(skin.id);
+    const isEquipped = equippedSkin === skin.id;
+
+    if (!hasSkin) {
+      action.textContent = "Kaufen";
+      action.addEventListener("click", async () => {
+        if (!ready || !auth.currentUser) return;
+
+        if (tokens < skin.price) {
+          alert("Du brauchst mindestens " + skin.price + " Tokens!");
+          return;
+        }
+
+        tokens -= skin.price;
+        ownedSkins.push(skin.id);
+        equippedSkin = skin.id;
+        applySkin(equippedSkin);
+        update();
+        await savePlayerGame();
+        renderSkinsUI(container);
+      });
+    } else if (isEquipped) {
+      action.textContent = "Ausgerüstet";
+      action.disabled = true;
+    } else {
+      action.textContent = "Anlegen";
+      action.addEventListener("click", async () => {
+        if (!ready || !auth.currentUser) return;
+
+        equippedSkin = skin.id;
+        applySkin(equippedSkin);
+        await savePlayerGame();
+        renderSkinsUI(container);
+      });
+    }
+
+    item.appendChild(imageWrap);
+    item.appendChild(info);
+    item.appendChild(action);
+    container.appendChild(item);
+  });
 }
 
 async function renderLeaderboard() {
@@ -321,6 +457,9 @@ onAuthStateChanged(auth, async user => {
 
     username = "";
     resetPetState();
+    ownedSkins = [];
+    equippedSkin = null;
+    applySkin(null);
     return;
   }
 
@@ -360,6 +499,14 @@ onAuthStateChanged(auth, async user => {
       : 1;
 
     petRarity = data.petRarity || "Kein Pet";
+    ownedSkins = Array.isArray(data.ownedSkins) ? data.ownedSkins : [];
+    equippedSkin = data.equippedSkin || null;
+
+    if (equippedSkin) {
+      applySkin(equippedSkin);
+    } else {
+      applySkin(null);
+    }
 
     update();
 
@@ -416,7 +563,9 @@ function savePlayerGame() {
         power,
         upgradeCost,
         petMultiplier,
-        petRarity
+        petRarity,
+        ownedSkins,
+        equippedSkin
       };
 
       await setDoc(
@@ -621,8 +770,11 @@ function showSection(section) {
   } else if (section === "skins") {
     content.innerHTML = `
       <h2>🎨 Skins</h2>
-      <p>Neue Skins kommen bald!</p>
+      <p>Skins kosten jeweils <strong>100000</strong> Tokens.</p>
+      <div id="skinsContainer"></div>
     `;
+
+    renderSkinsUI($("skinsContainer"));
 
   // QUESTS
   } else if (section === "quests") {
