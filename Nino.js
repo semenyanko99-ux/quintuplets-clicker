@@ -609,7 +609,8 @@ onAuthStateChanged(auth, async user => {
         target: Number.isFinite(data.quest.target) ? data.quest.target : randomQuestTarget(),
         progress: Number.isFinite(data.quest.progress) ? data.quest.progress : 0,
         expiresAt: Number.isFinite(data.quest.expiresAt) ? data.quest.expiresAt : Date.now() + 2 * 60 * 60 * 1000,
-        completed: !!data.quest.completed
+        completed: !!data.quest.completed,
+        completedAt: Number.isFinite(data.quest.completedAt) ? data.quest.completedAt : null
       };
     } else {
       quest = null;
@@ -741,16 +742,22 @@ if ($("clickButton")) {
       quest.progress += 1;
 
       if (quest.progress >= quest.target) {
+        // mark completed and lock next quest for 2 hours
         quest.completed = true;
-        const reward = Math.floor(quest.target / 10);
-        tokens += reward;
+        quest.completedAt = Date.now();
+        quest.expiresAt = Date.now() + 2 * 60 * 60 * 1000; // lock for 2 hours
+
+        // Reward: +10 to the upgrade (additive to power)
+        power += 10;
 
         const status = $("questStatus");
         if (status) {
-          status.textContent = `Quest abgeschlossen! +${reward} Tokens`;
+          status.textContent = `Quest abgeschlossen! +10 Klickstärke`;
         }
 
-        startNewQuest(true);
+        // persist new state (quest + power)
+        savePlayerGame();
+        // don't start a new quest immediately; ensureQuestActive will create a new one when expiresAt passes
       }
     }
 
@@ -797,7 +804,7 @@ function showSection(section) {
 
         if (tokens >= upgradeCost) {
           tokens -= upgradeCost;
-          power += 1;
+          power *= 2.5;
           upgradeCost = Math.floor(upgradeCost * 2);
 
           update();
@@ -945,8 +952,13 @@ function showSection(section) {
     `;
 
     const questStatus = $("questStatus");
-    if (questStatus && quest && quest.progress >= quest.target) {
-      questStatus.textContent = "Quest abgeschlossen! Neue Quest startet automatisch...";
+    if (questStatus && quest) {
+      if (quest.completed) {
+        const rem = Math.max(0, quest.expiresAt - Date.now());
+        questStatus.textContent = `Quest abgeschlossen. Nächste Quest in ${formatQuestTime(rem)}.`;
+      } else {
+        questStatus.textContent = "Quest läuft…";
+      }
     }
 
     const refreshQuestText = () => {
@@ -955,6 +967,12 @@ function showSection(section) {
       if (progressEl) progressEl.textContent = quest.progress.toLocaleString();
       const timeEl = $("questTime");
       if (timeEl) timeEl.textContent = formatQuestTime(Math.max(0, quest.expiresAt - Date.now()));
+
+      // If the quest was completed and the lock expired, refresh the section so a new quest appears
+      if (quest.completed && quest.expiresAt <= Date.now()) {
+        ensureQuestActive();
+        showSection("quests");
+      }
     };
 
     refreshQuestText();
