@@ -110,6 +110,13 @@ let leaderboardRefreshTimer = null;
 let quest = null;
 let questTimer = null;
 let questRefreshInterval = null;
+let saveTimer = null;
+let lastPublicProfileSaveAt = 0;
+let lastPublicProfileTokens = 0;
+
+const SAVE_DEBOUNCE_MS = 2000;
+const PUBLIC_PROFILE_SAVE_INTERVAL_MS = 5 * 60 * 1000;
+const PUBLIC_PROFILE_TOKEN_THRESHOLD = 100;
 
 // ========================================
 // HILFSFUNKTIONEN
@@ -420,6 +427,17 @@ function ensureQuestActive() {
   }, remaining);
 }
 
+function scheduleSave(immediate = false) {
+  if (immediate) {
+    return savePlayerGame();
+  }
+
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    savePlayerGame();
+  }, SAVE_DEBOUNCE_MS);
+}
+
 // ========================================
 // REGISTRIEREN
 // ========================================
@@ -666,6 +684,26 @@ function savePlayerGame() {
 
   const user = auth.currentUser;
 
+  try {
+    localStorage.setItem(
+      "qc_local_save_" + user.uid,
+      JSON.stringify({
+        username,
+        tokens,
+        power,
+        upgradeCost,
+        petMultiplier,
+        petRarity,
+        ownedSkins,
+        equippedSkin,
+        quest,
+        savedAt: Date.now()
+      })
+    );
+  } catch (error) {
+    console.warn("Local save failed:", error);
+  }
+
   if ($("saveStatus")) {
     $("saveStatus").textContent = "Speichert …";
   }
@@ -695,14 +733,27 @@ function savePlayerGame() {
         { merge: true }
       );
 
-      await setDoc(
-        doc(db, "public_profiles", user.uid),
-        {
-          username,
-          tokens
-        },
-        { merge: true }
-      );
+      const now = Date.now();
+      const tokenDiff = Math.abs((tokens || 0) - (lastPublicProfileTokens || 0));
+      const timeSinceLastPublicSave = now - (lastPublicProfileSaveAt || 0);
+
+      if (
+        lastPublicProfileSaveAt === 0 ||
+        timeSinceLastPublicSave >= PUBLIC_PROFILE_SAVE_INTERVAL_MS ||
+        tokenDiff >= PUBLIC_PROFILE_TOKEN_THRESHOLD
+      ) {
+        await setDoc(
+          doc(db, "public_profiles", user.uid),
+          {
+            username,
+            tokens
+          },
+          { merge: true }
+        );
+
+        lastPublicProfileSaveAt = now;
+        lastPublicProfileTokens = tokens;
+      }
 
       scheduleLeaderboardRefresh();
 
@@ -761,13 +812,13 @@ if ($("clickButton")) {
         }
 
         // persist new state (quest + power)
-        savePlayerGame();
+        scheduleSave(true);
         // don't start a new quest immediately; ensureQuestActive will create a new one when expiresAt passes
       }
     }
 
     update();
-    savePlayerGame();
+    scheduleSave();
   });
 }
 
