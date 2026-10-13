@@ -38,11 +38,12 @@ const db = getFirestore(app);
 const $ = id => document.getElementById(id);
 
 // ========================================
-// SPIELVARIABLEN
+// SPIELVARIABLEN (BALANCED)
 // ========================================
 
+// Lower base power so progression is slower
 let tokens = 0;
-let power = 1;
+let power = 0.1; // each click gives 0.1 tokens initially
 let upgradeCost = 10;
 let petMultiplier = 1;
 let petRarity = "Kein Pet";
@@ -144,7 +145,7 @@ function defaultPlayerData(name) {
   return {
     username: name || "Spieler",
     tokens: 0,
-    power: 1,
+    power: 0.1,
     upgradeCost: 10,
     petMultiplier: 1,
     petRarity: "Kein Pet",
@@ -355,8 +356,10 @@ function scheduleLeaderboardRefresh() {
 }
 
 function randomQuestTarget() {
-  // Fixed target: 20000 clicks (no randomness)
-  return 20000;
+  // return a random target between 10,000 and 100,000 clicks
+  const min = 10000;
+  const max = 100000;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function formatQuestTime(ms) {
@@ -592,7 +595,7 @@ onAuthStateChanged(auth, async user => {
 
     username = data.username || "Spieler";
     tokens = Number.isFinite(data.tokens) ? data.tokens : 0;
-    power = Number.isFinite(data.power) ? data.power : 1;
+    power = Number.isFinite(data.power) ? data.power : 0.1;
 
     upgradeCost = Number.isFinite(data.upgradeCost)
       ? data.upgradeCost
@@ -749,12 +752,12 @@ if ($("clickButton")) {
         quest.completedAt = Date.now();
         quest.expiresAt = Date.now() + 2 * 60 * 60 * 1000; // lock for 2 hours
 
-        // Reward: +10 to the upgrade (additive to power)
-        power += 10;
+        // Reward: small multiplicative increase to avoid instant power spikes
+        power *= 1.15; // +15% power
 
         const status = $("questStatus");
         if (status) {
-          status.textContent = `Quest abgeschlossen! +10 Klickstärke`;
+          status.textContent = `Quest abgeschlossen! +15% Klickstärke`;
         }
 
         // persist new state (quest + power)
@@ -806,8 +809,9 @@ function showSection(section) {
 
         if (tokens >= upgradeCost) {
           tokens -= upgradeCost;
-          power *= 2.5;
-          upgradeCost = Math.floor(upgradeCost * 2);
+          // slower, smoother progression: small multiplicative growth
+          power *= 1.15; // +15% power per upgrade
+          upgradeCost = Math.max( Math.floor(upgradeCost * 1.5), upgradeCost + 1 );
 
           update();
           savePlayerGame();
@@ -870,10 +874,11 @@ function showSection(section) {
     $("spinRoulette").addEventListener("click", () => {
       if (!ready || !auth.currentUser) return;
 
-      const petSpinCost = 1000;
+      // make pets rarer by increasing cost
+      const petSpinCost = 5000;
 
       if (tokens < petSpinCost) {
-        alert("Du brauchst mindestens 1000 Tokens, um das Roulette zu drehen!");
+        alert("Du brauchst mindestens 5000 Tokens, um das Roulette zu drehen!");
         return;
       }
 
