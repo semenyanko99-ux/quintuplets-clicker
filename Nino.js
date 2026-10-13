@@ -51,7 +51,6 @@ let username = "";
 let ownedSkins = [];
 let equippedSkin = null;
 
-const SKINS = [
   {
     id: "skin1",
     name: "Skin 1",
@@ -94,6 +93,7 @@ const SKINS = [
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0044.jpeg"
   },
+
   
 ];
 
