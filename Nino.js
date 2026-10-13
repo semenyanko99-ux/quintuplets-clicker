@@ -158,14 +158,18 @@ function applySkin(skinId) {
     clickButton.style.backgroundImage = "";
     clickButton.style.backgroundSize = "";
     clickButton.style.backgroundPosition = "";
+    clickButton.style.backgroundRepeat = "";
     clickButton.style.border = "";
+    clickButton.style.backgroundColor = "";
     return;
   }
 
   clickButton.style.backgroundImage = `url('${selectedSkin.image}')`;
   clickButton.style.backgroundSize = "cover";
   clickButton.style.backgroundPosition = "center";
+  clickButton.style.backgroundRepeat = "no-repeat";
   clickButton.style.border = "2px solid #ffd700";
+  clickButton.style.backgroundColor = "transparent";
 }
 
 function renderSkinsUI(container) {
