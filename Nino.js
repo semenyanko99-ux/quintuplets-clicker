@@ -56,25 +56,25 @@ const SKINS = [
     id: "skin1",
     name: "Skin 1",
     price: 100000,
-    image: "IMG_0002.jpg"
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0002.jpeg"
   },
   {
     id: "skin2",
     name: "Skin 2",
     price: 100000,
-    image: "IMG_0293.jpg"
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0293.jpeg"
   },
   {
     id: "skin3",
     name: "Skin 3",
     price: 100000,
-    image: "IMG_0010.jpg"
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0010.png"
   },
   {
     id: "skin4",
     name: "Skin 4",
     price: 100000,
-    image: "IMG_0013.jpg"
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0013.jpeg"
   }
 ];
 
@@ -656,7 +656,7 @@ function showSection(section) {
       <p>Deine Klickstärke: ${(power * petMultiplier).toFixed(2)}</p>
       <button id="buyUpgrade">Upgrade kaufen</button>
       <button id="openSkins" style="margin-left:8px;">Skins ansehen</button>
-      <div id="shopSkinsContainer" style="margin-top:16px;"></div>
+      <div id="shopSkinsContainer" style="margin-top:16px; display:none;"></div>
     `;
 
     const buyBtn = $("buyUpgrade");
@@ -680,20 +680,19 @@ function showSection(section) {
       });
     }
 
-    // render skins inline in shop
-    const shopSkinsContainer = $("shopSkinsContainer");
-    renderSkinsUI(shopSkinsContainer);
-
     const openSkinsBtn = $("openSkins");
     if (openSkinsBtn) {
-      openSkinsBtn.addEventListener('click', () => {
+      openSkinsBtn.addEventListener("click", () => {
         const c = $("shopSkinsContainer");
         if (!c) return;
-        c.style.display = c.style.display === 'none' || !c.style.display ? 'block' : 'none';
-        // ensure rendering if shown
-        if (c.style.display === 'block') renderSkinsUI(c);
+        const show = c.style.display === "none";
+        c.style.display = show ? "block" : "none";
+        if (show) renderSkinsUI(c);
       });
     }
+
+    // initial render if desired; hidden by default
+    renderSkinsUI($("shopSkinsContainer"));
 
   // PETS
   } else if (section === "pets") {
