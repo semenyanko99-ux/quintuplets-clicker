@@ -75,7 +75,26 @@ const SKINS = [
     name: "Skin 4",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0013.jpeg"
-  }
+  }, 
+  {
+    id: "skin5",
+    name: "Skin 5",
+    price: 100000,
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0041.jpeg"
+  },
+    {
+    id: "skin6",
+    name: "Skin 6",
+    price: 100000,
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0043.jpeg"
+  },
+    {
+    id: "skin7",
+    name: "Skin 7",
+    price: 100000,
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0044.jpeg"
+  },
+  
 ];
 
 let ready = false;
