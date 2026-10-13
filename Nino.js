@@ -51,6 +51,7 @@ let username = "";
 let ownedSkins = [];
 let equippedSkin = null;
 
+const SKINS = [
   {
     id: "skin1",
     name: "Skin 1",
@@ -74,39 +75,40 @@ let equippedSkin = null;
     name: "Skin 4",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0013.jpeg"
-  }, 
+  },
   {
     id: "skin5",
     name: "Skin 5",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0041.jpeg"
   },
-    {
+  {
     id: "skin6",
     name: "Skin 6",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0043.jpeg"
   },
-    {
+  {
     id: "skin7",
     name: "Skin 7",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0044.jpeg"
   },
-    {
+  {
     id: "skin8",
     name: "Skin 8",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0042.jpeg"
-    },
-
-  
+  }
 ];
 
 let ready = false;
 let busy = false;
 let saveQueue = Promise.resolve();
 let leaderboardRefreshTimer = null;
+
+let quest = null;
+let questTimer = null;
 
 // ========================================
 // HILFSFUNKTIONEN
@@ -147,7 +149,8 @@ function defaultPlayerData(name) {
     petMultiplier: 1,
     petRarity: "Kein Pet",
     ownedSkins: [],
-    equippedSkin: null
+    equippedSkin: null,
+    quest: null
   };
 }
 
@@ -351,6 +354,67 @@ function scheduleLeaderboardRefresh() {
   }, 5000);
 }
 
+function randomQuestTarget() {
+  return Math.floor(Math.random() * (100000 - 10000 + 1)) + 10000;
+}
+
+function formatQuestTime(ms) {
+  if (!ms || ms <= 0) return "0s";
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+}
+
+function startNewQuest(autoSave = true) {
+  quest = {
+    target: randomQuestTarget(),
+    progress: 0,
+    expiresAt: Date.now() + 2 * 60 * 60 * 1000,
+    completed: false
+  };
+
+  if (questTimer) {
+    clearTimeout(questTimer);
+  }
+
+  questTimer = setTimeout(() => {
+    startNewQuest(true);
+    const content = $("content");
+    if (content && content.innerHTML.includes("Quest")) {
+      showSection("quests");
+    }
+  }, 2 * 60 * 60 * 1000);
+
+  if (autoSave) {
+    savePlayerGame();
+  }
+}
+
+function ensureQuestActive() {
+  if (!quest || !Number.isFinite(quest.target) || quest.target < 10000 || quest.target > 100000 || quest.expiresAt <= Date.now()) {
+    startNewQuest(true);
+    return;
+  }
+
+  if (questTimer) {
+    clearTimeout(questTimer);
+  }
+
+  const remaining = Math.max(0, quest.expiresAt - Date.now());
+  questTimer = setTimeout(() => {
+    startNewQuest(true);
+    const content = $("content");
+    if (content && content.innerHTML.includes("Quest")) {
+      showSection("quests");
+    }
+  }, remaining);
+}
+
 // ========================================
 // REGISTRIEREN
 // ========================================
@@ -494,6 +558,8 @@ onAuthStateChanged(auth, async user => {
     ownedSkins = [];
     equippedSkin = null;
     applySkin(null);
+    quest = null;
+    if (questTimer) clearTimeout(questTimer);
     return;
   }
 
@@ -536,6 +602,17 @@ onAuthStateChanged(auth, async user => {
     ownedSkins = Array.isArray(data.ownedSkins) ? data.ownedSkins : [];
     equippedSkin = data.equippedSkin || null;
 
+    if (data.quest) {
+      quest = {
+        target: Number.isFinite(data.quest.target) ? data.quest.target : randomQuestTarget(),
+        progress: Number.isFinite(data.quest.progress) ? data.quest.progress : 0,
+        expiresAt: Number.isFinite(data.quest.expiresAt) ? data.quest.expiresAt : Date.now() + 2 * 60 * 60 * 1000,
+        completed: !!data.quest.completed
+      };
+    } else {
+      quest = null;
+    }
+
     if (equippedSkin) {
       applySkin(equippedSkin);
     } else {
@@ -555,6 +632,7 @@ onAuthStateChanged(auth, async user => {
       $("saveStatus").textContent = "☁️ Spielstand geladen!";
     }
 
+    ensureQuestActive();
     await renderLeaderboard();
     ready = true;
 
@@ -599,7 +677,8 @@ function savePlayerGame() {
         petMultiplier,
         petRarity,
         ownedSkins,
-        equippedSkin
+        equippedSkin,
+        quest
       };
 
       await setDoc(
@@ -656,6 +735,23 @@ if ($("clickButton")) {
       (tokens + power * petMultiplier).toFixed(2)
     );
 
+    if (quest && !quest.completed) {
+      quest.progress += 1;
+
+      if (quest.progress >= quest.target) {
+        quest.completed = true;
+        const reward = Math.floor(quest.target / 10);
+        tokens += reward;
+
+        const status = $("questStatus");
+        if (status) {
+          status.textContent = `Quest abgeschlossen! +${reward} Tokens`;
+        }
+
+        startNewQuest(true);
+      }
+    }
+
     update();
     savePlayerGame();
   });
@@ -679,7 +775,6 @@ function showSection(section) {
   const content = $("content");
   if (!content) return;
 
-  // SHOP
   if (section === "shop") {
     content.innerHTML = `
       <h2>Shop 🛒</h2>
@@ -725,10 +820,8 @@ function showSection(section) {
       });
     }
 
-    // initial render if desired; hidden by default
     renderSkinsUI($("shopSkinsContainer"));
 
-  // PETS
   } else if (section === "pets") {
     content.innerHTML = `
       <h2>🎰 Pet-Roulette</h2>
@@ -819,7 +912,6 @@ function showSection(section) {
       savePlayerGame();
     });
 
-  // SKINS
   } else if (section === "skins") {
     content.innerHTML = `
       <h2>🎨 Skins</h2>
@@ -829,12 +921,37 @@ function showSection(section) {
 
     renderSkinsUI($("skinsContainer"));
 
-  // QUESTS
   } else if (section === "quests") {
+    ensureQuestActive();
+
+    const currentTarget = quest ? quest.target : 0;
+    const currentProgress = quest ? quest.progress : 0;
+    const remaining = quest ? Math.max(0, quest.expiresAt - Date.now()) : 0;
+
     content.innerHTML = `
-      <h2>📜 Quests</h2>
-      <p>Neue Quests kommen bald!</p>
+      <h2>📜 Quest</h2>
+      <p>Ziel: <strong>${currentTarget.toLocaleString()}</strong> Klicks</p>
+      <p>Fortschritt: <strong id="questProgress">${currentProgress.toLocaleString()}</strong> / <strong>${currentTarget.toLocaleString()}</strong></p>
+      <p>Verbleibende Zeit: <strong id="questTime">${formatQuestTime(remaining)}</strong></p>
+      <p id="questStatus" style="margin-top: 12px; font-size: 13px; opacity: 0.9;">Quest läuft…</p>
+      <p style="margin-top: 12px; font-size: 12px; opacity: 0.8;">Die Quest wird alle 2 Stunden neu geladen.</p>
     `;
+
+    const questStatus = $("questStatus");
+    if (questStatus && quest && quest.progress >= quest.target) {
+      questStatus.textContent = "Quest abgeschlossen! Neue Quest startet automatisch...";
+    }
+
+    const refreshQuestText = () => {
+      if (!quest) return;
+      const progressEl = $("questProgress");
+      if (progressEl) progressEl.textContent = quest.progress.toLocaleString();
+      const timeEl = $("questTime");
+      if (timeEl) timeEl.textContent = formatQuestTime(Math.max(0, quest.expiresAt - Date.now()));
+    };
+
+    refreshQuestText();
+    setInterval(refreshQuestText, 1000);
   }
 }
 
