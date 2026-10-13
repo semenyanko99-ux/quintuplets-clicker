@@ -355,7 +355,8 @@ function scheduleLeaderboardRefresh() {
 }
 
 function randomQuestTarget() {
-  return Math.floor(Math.random() * (100000 - 10000 + 1)) + 10000;
+  // Fixed target: 20000 clicks (no randomness)
+  return 20000;
 }
 
 function formatQuestTime(ms) {
@@ -396,7 +397,8 @@ function startNewQuest(autoSave = true) {
 }
 
 function ensureQuestActive() {
-  if (!quest || !Number.isFinite(quest.target) || quest.target < 10000 || quest.target > 100000 || quest.expiresAt <= Date.now()) {
+  // If no quest or target missing/invalid, start new one
+  if (!quest || !Number.isFinite(quest.target) || quest.expiresAt <= Date.now()) {
     startNewQuest(true);
     return;
   }
