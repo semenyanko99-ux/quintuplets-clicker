@@ -97,7 +97,8 @@ let equippedSkin = null;
     id: "skin8",
     name: "Skin 8",
     price: 100000,
-    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0042.jpeg"
+    },
 
   
 ];
