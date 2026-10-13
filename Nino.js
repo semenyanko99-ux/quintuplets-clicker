@@ -159,7 +159,7 @@ function applySkin(skinId) {
     buttonImage.src = "Volume_7_clean_cover_art.webp";
     buttonImage.alt = "Standard Bild";
     clickButton.style.border = "5px solid #ff80bd";
-    clickButton.style.backgroundImage = "";
+    clickButton.style.backgroundImage = "IMG_0013.jpeg";
     clickButton.style.backgroundSize = "";
     clickButton.style.backgroundPosition = "";
     clickButton.style.backgroundRepeat = "";
@@ -170,7 +170,7 @@ function applySkin(skinId) {
   buttonImage.src = selectedSkin.image;
   buttonImage.alt = selectedSkin.name;
   clickButton.style.border = "2px solid #ffd700";
-  clickButton.style.backgroundImage = "";
+  clickButton.style.backgroundImage = "IMG_0293.jpeg";
   clickButton.style.backgroundSize = "";
   clickButton.style.backgroundPosition = "";
   clickButton.style.backgroundRepeat = "";
