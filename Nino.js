@@ -93,6 +93,11 @@ let equippedSkin = null;
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0044.jpeg"
   },
+    {
+    id: "skin8",
+    name: "Skin 8",
+    price: 100000,
+    image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_
 
   
 ];
