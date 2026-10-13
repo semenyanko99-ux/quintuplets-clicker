@@ -655,25 +655,45 @@ function showSection(section) {
       </p>
       <p>Deine Klickstärke: ${(power * petMultiplier).toFixed(2)}</p>
       <button id="buyUpgrade">Upgrade kaufen</button>
+      <button id="openSkins" style="margin-left:8px;">Skins ansehen</button>
+      <div id="shopSkinsContainer" style="margin-top:16px;"></div>
     `;
 
-    $("buyUpgrade").addEventListener("click", () => {
-      if (!ready || !auth.currentUser) return;
+    const buyBtn = $("buyUpgrade");
+    if (buyBtn) {
+      buyBtn.addEventListener("click", () => {
+        if (!ready || !auth.currentUser) return;
 
-      if (tokens >= upgradeCost) {
-        tokens -= upgradeCost;
-        power += 1;
-        upgradeCost = Math.floor(upgradeCost * 2);
+        if (tokens >= upgradeCost) {
+          tokens -= upgradeCost;
+          power += 1;
+          upgradeCost = Math.floor(upgradeCost * 2);
 
-        update();
-        savePlayerGame();
-        showSection("shop");
-      } else {
-        alert(
-          "Du brauchst mindestens " + upgradeCost + " Tokens!"
-        );
-      }
-    });
+          update();
+          savePlayerGame();
+          showSection("shop");
+        } else {
+          alert(
+            "Du brauchst mindestens " + upgradeCost + " Tokens!"
+          );
+        }
+      });
+    }
+
+    // render skins inline in shop
+    const shopSkinsContainer = $("shopSkinsContainer");
+    renderSkinsUI(shopSkinsContainer);
+
+    const openSkinsBtn = $("openSkins");
+    if (openSkinsBtn) {
+      openSkinsBtn.addEventListener('click', () => {
+        const c = $("shopSkinsContainer");
+        if (!c) return;
+        c.style.display = c.style.display === 'none' || !c.style.display ? 'block' : 'none';
+        // ensure rendering if shown
+        if (c.style.display === 'block') renderSkinsUI(c);
+      });
+    }
 
   // PETS
   } else if (section === "pets") {
