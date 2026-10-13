@@ -150,26 +150,31 @@ function escapeHtml(str) {
 
 function applySkin(skinId) {
   const clickButton = $("clickButton");
-  if (!clickButton) return;
+  const buttonImage = $("buttonImage");
+  if (!clickButton || !buttonImage) return;
 
   const selectedSkin = SKINS.find(skin => skin.id === skinId);
 
   if (!selectedSkin) {
+    buttonImage.src = "Volume_7_clean_cover_art.webp";
+    buttonImage.alt = "Standard Bild";
+    clickButton.style.border = "5px solid #ff80bd";
     clickButton.style.backgroundImage = "";
     clickButton.style.backgroundSize = "";
     clickButton.style.backgroundPosition = "";
     clickButton.style.backgroundRepeat = "";
-    clickButton.style.border = "";
     clickButton.style.backgroundColor = "";
     return;
   }
 
-  clickButton.style.backgroundImage = `url('${selectedSkin.image}')`;
-  clickButton.style.backgroundSize = "cover";
-  clickButton.style.backgroundPosition = "center";
-  clickButton.style.backgroundRepeat = "no-repeat";
+  buttonImage.src = selectedSkin.image;
+  buttonImage.alt = selectedSkin.name;
   clickButton.style.border = "2px solid #ffd700";
-  clickButton.style.backgroundColor = "transparent";
+  clickButton.style.backgroundImage = "";
+  clickButton.style.backgroundSize = "";
+  clickButton.style.backgroundPosition = "";
+  clickButton.style.backgroundRepeat = "";
+  clickButton.style.backgroundColor = "";
 }
 
 function renderSkinsUI(container) {
