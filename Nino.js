@@ -57,49 +57,49 @@ let equippedSkin = null;
 const SKINS = [
   {
     id: "skin1",
-    name: "Skin 1",
+    name: "Black Hole",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0002.jpeg"
   },
   {
     id: "skin2",
-    name: "Skin 2",
+    name: "Russian Meme",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0293.jpeg"
   },
   {
     id: "skin3",
-    name: "Skin 3",
+    name: "Idk random screenshot",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0010.png"
   },
   {
     id: "skin4",
-    name: "Skin 4",
+    name: "Quintulets",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0013.jpeg"
   },
   {
     id: "skin5",
-    name: "Skin 5",
+    name: "Miku Nakano",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0041.jpeg"
   },
   {
     id: "skin6",
-    name: "Skin 6",
+    name: "Eatsuki Nakano",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0043.jpeg"
   },
   {
     id: "skin7",
-    name: "Skin 7",
+    name: "Nino Nakano",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0044.jpeg"
   },
   {
     id: "skin8",
-    name: "Skin 8",
+    name: "Yotsuba Nakano",
     price: 100000,
     image: "https://raw.githubusercontent.com/semenyanko99-ux/quintuplets-clicker/main/IMG_0042.jpeg"
   }
@@ -172,12 +172,12 @@ function validUsername(name) {
 
 function defaultPlayerData(name) {
   return {
-    username: name || "Spieler",
+    username: name || "Player",
     tokens: 0,
     power: 0.1,
     upgradeCost: 10,
     petMultiplier: 1,
-    petRarity: "Kein Pet",
+    petRarity: "No Pet",
     ownedSkins: [],
     equippedSkin: null,
     quest: null,
@@ -187,7 +187,7 @@ function defaultPlayerData(name) {
 }
 
 function resetPetState() {
-  petRarity = "Kein Pet";
+  petRarity = "No Pet";
   petMultiplier = 1;
 
   if ($("currentPet")) {
@@ -282,12 +282,12 @@ function renderSkinsUI(container) {
     const isEquipped = equippedSkin === skin.id;
 
     if (!hasSkin) {
-      action.textContent = "Kaufen";
+      action.textContent = "Buy";
       action.addEventListener("click", async () => {
         if (!ready || !auth.currentUser) return;
 
         if (tokens < skin.price) {
-          alert("Du brauchst mindestens " + skin.price + " Tokens!");
+          alert("You need " + skin.price + " Tokens!");
           return;
         }
 
@@ -325,7 +325,7 @@ async function renderLeaderboard() {
   const listEl = $("leaderboardList");
   if (!listEl) return;
 
-  listEl.innerHTML = "<li>Lädt...</li>";
+  listEl.innerHTML = "<li>Loading...</li>";
 
   try {
     const q = query(
@@ -337,7 +337,7 @@ async function renderLeaderboard() {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      listEl.innerHTML = "<li>Keine Einträge</li>";
+      listEl.innerHTML = "<li>No Quests</li>";
       return;
     }
 
@@ -359,14 +359,14 @@ async function renderLeaderboard() {
       })
       .join("");
   } catch (error) {
-    console.error("Leaderboard laden fehlgeschlagen:", error);
-    listEl.innerHTML = "<li>Fehler beim Laden</li>";
+    console.error("Leaderboard load error:", error);
+    listEl.innerHTML = "<li>Load error</li>";
 
     if (error?.code) {
       const err = document.createElement("li");
       err.style.fontSize = "12px";
       err.style.opacity = "0.8";
-      err.textContent = "Fehler: " + error.code;
+      err.textContent = le"Error: " + error.code;
       listEl.appendChild(err);
     }
   }
@@ -475,13 +475,13 @@ if ($("registerButton")) {
 
     if (!validUsername(name)) {
       message(
-        "Benutzername: 3–16 Buchstaben, Zahlen oder _."
+        "Nickname: 3–16 Letters, Numbers or _."
       );
       return;
     }
 
     if (password.length < 6) {
-      message("Das Passwort muss mindestens 6 Zeichen haben.");
+      message("The password must be at least 6 characters long.");
       return;
     }
 
@@ -501,13 +501,13 @@ if ($("registerButton")) {
         defaultPlayerData(name)
       );
 
-      message("Konto erstellt!");
+      message("Account created!");
 
     } catch (error) {
       console.error("Registrierungsfehler:", error);
 
       if (error.code === "auth/email-already-in-use") {
-        message("Dieser Benutzername ist bereits vergeben.");
+        message("There are a user with same Nickname.");
       } else if (
         error.code === "auth/operation-not-allowed"
       ) {
@@ -516,7 +516,7 @@ if ($("registerButton")) {
         );
       } else {
         message(
-          "Konto konnte nicht erstellt werden: " + error.code
+          "Account could not be created: " + error.code
         );
       }
 
@@ -541,17 +541,17 @@ if ($("authForm")) {
     const password = $("password")?.value || "";
 
     if (!validUsername(name)) {
-      message("Bitte gib einen gültigen Benutzernamen ein.");
+      message("Please enter a valid username.");
       return;
     }
 
     if (!password) {
-      message("Bitte gib dein Passwort ein.");
+      message("Please enter your password.");
       return;
     }
 
     busy = true;
-    message("Anmeldung läuft …");
+    message("Log in is ongoing...");
 
     try {
       await signInWithEmailAndPassword(
@@ -560,17 +560,17 @@ if ($("authForm")) {
         password
       );
 
-      message("Anmeldung erfolgreich!");
+      message("Log in successful!");
 
     } catch (error) {
-      console.error("Anmeldefehler:", error);
+      console.error("Log in error:", error);
 
       if (
         error.code === "auth/invalid-credential" ||
         error.code === "auth/wrong-password" ||
         error.code === "auth/user-not-found"
       ) {
-        message("Benutzername oder Passwort ist falsch.");
+        message("Nickname or password are wrong.");
       } else if (
         error.code === "auth/operation-not-allowed"
       ) {
@@ -579,7 +579,7 @@ if ($("authForm")) {
         );
       } else {
         message(
-          "Anmeldung fehlgeschlagen: " + error.code
+          "Log in error: " + error.code
         );
       }
 
@@ -613,7 +613,7 @@ onAuthStateChanged(auth, async user => {
   }
 
   if ($("saveStatus")) {
-    $("saveStatus").textContent = "Spielstand wird geladen …";
+    $("saveStatus").textContent = "Loading…";
   }
 
   try {
@@ -635,7 +635,7 @@ onAuthStateChanged(auth, async user => {
 
     const data = snapshot.data();
 
-    username = data.username || "Spieler";
+    username = data.username || "Player";
     tokens = Number.isFinite(data.tokens) ? data.tokens : 0;
     power = Number.isFinite(data.power) ? data.power : 0.1;
 
@@ -683,7 +683,7 @@ onAuthStateChanged(auth, async user => {
     if ($("gamePanel")) $("gamePanel").hidden = false;
 
     if ($("saveStatus")) {
-      $("saveStatus").textContent = "☁️ Spielstand geladen!";
+      $("saveStatus").textContent = "Loaded!";
     }
 
     ensureQuestActive();
@@ -695,7 +695,7 @@ onAuthStateChanged(auth, async user => {
 
     if ($("saveStatus")) {
       $("saveStatus").textContent =
-        "❌ Laden fehlgeschlagen: " + (error?.code || error?.message || "Unbekannt");
+        "Loading error: " + (error?.code || error?.message || "?s");
     }
   }
 });
@@ -735,7 +735,7 @@ function savePlayerGame() {
   }
 
   if ($("saveStatus")) {
-    $("saveStatus").textContent = "Speichert …";
+    $("saveStatus").textContent = "Saving…";
   }
 
   saveQueue = saveQueue
@@ -794,7 +794,7 @@ function savePlayerGame() {
         $("saveStatus")
       ) {
         $("saveStatus").textContent =
-          "☁️ Spielstand gespeichert!";
+          "Saved!";
       }
 
       return true;
@@ -804,7 +804,7 @@ function savePlayerGame() {
 
       if ($("saveStatus")) {
         $("saveStatus").textContent =
-          "Speichern fehlgeschlagen: " +
+          "Save Error: " +
           (error.code || error.message);
       }
 
@@ -824,7 +824,7 @@ function performRebirth() {
   const cost = getRebirthCost();
 
   if (tokens < cost) {
-    alert(`Du brauchst mindestens ${cost.toLocaleString()} Tokens, um einen Rebirth zu machen.`);
+    alert(`You need at least ${cost.toLocaleString()} Tokens, for a Rebirth.`);
     return;
   }
 
@@ -832,7 +832,7 @@ function performRebirth() {
   power = 0.1;
   upgradeCost = 10;
   petMultiplier = 1;
-  petRarity = "Kein Pet";
+  petRarity = "No Pet";
   ownedSkins = [];
   equippedSkin = null;
   quest = null;
@@ -847,7 +847,7 @@ function performRebirth() {
   questRefreshInterval = null;
 
   if ($("questStatus")) {
-    $("questStatus").textContent = "Rebirth erfolgreich! Neue Quest startet beim nächsten Laden.";
+    $("questStatus").textContent = "Rebirth successful! New quest starts on the next load.";
   }
 
   update();
@@ -881,7 +881,7 @@ if ($("clickButton")) {
 
         const status = $("questStatus");
         if (status) {
-          status.textContent = `Quest abgeschlossen! +15% Klickstärke`;
+          status.textContent = `Quest done! +15% Click Multiplier`;
         }
 
         // persist new state (quest + power)
@@ -919,16 +919,16 @@ function showSection(section) {
     content.innerHTML = `
       <h2>Shop 🛒</h2>
       <p>
-        Upgrade kostet
+        Upgrade cost
         <strong>${upgradeCost}</strong> Tokens.
       </p>
       <p>Deine Klickstärke: ${(getEffectivePower()).toFixed(2)}</p>
       <p>Rebirths: <strong id="rebirthCount">${rebirths}</strong></p>
       <p>Rebirth-Bonus: ×<strong id="rebirthBonusValue">${rebirthPowerBonus.toFixed(2)}</strong></p>
-      <p id="rebirthInfo">Nächster Rebirth: ${rebirthCost.toLocaleString()} Tokens</p>
+      <p id="rebirthInfo">Next Rebirth: ${rebirthCost.toLocaleString()} Tokens</p>
       <button id="buyUpgrade">Upgrade kaufen</button>
       <button id="doRebirth" style="margin-left:8px;">Rebirth</button>
-      <button id="openSkins" style="margin-left:8px;">Skins ansehen</button>
+      <button id="openSkins" style="margin-left:8px;">Skins</button>
       <div id="shopSkinsContainer" style="margin-top:16px; display:none;"></div>
     `;
 
@@ -948,7 +948,7 @@ function showSection(section) {
           showSection("shop");
         } else {
           alert(
-            "Du brauchst mindestens " + upgradeCost + " Tokens!"
+            "You need at least " + upgradeCost + " Tokens!"
           );
         }
       });
@@ -976,11 +976,11 @@ function showSection(section) {
     content.innerHTML = `
       <h2>🎰 Pet-Roulette</h2>
 
-      <p>Dein aktuelles Pet:
+      <p>Your Pet:
         <strong id="currentPet">${petRarity}</strong>
       </p>
 
-      <p>Dein Pet-Multiplikator:
+      <p>Your pet Multiplier:
         ×<span id="currentMultiplier">${petMultiplier}</span>
       </p>
 
@@ -992,10 +992,10 @@ function showSection(section) {
         border-radius:12px;
         text-align:center;
         font-size:22px;
-      ">🐣 Bereit?</div>
+      ">🐣 Ready?</div>
 
       <button id="spinRoulette">
-        🎰 Roulette drehen
+        🎰 Roll!
       </button>
 
       <h3>Seltenheiten</h3>
@@ -1003,7 +1003,7 @@ function showSection(section) {
       <p>🟣 Marin: 20 % — ×2</p>
       <p>🟡 Alya: 15 % — ×4</p>
       <p>🔴 Futaro: 7 % — ×6</p>
-      <p>😢 Kein Pet: 8 %</p>
+      <p>😢 No Pet: 8 %</p>
     `;
 
     $("spinRoulette").addEventListener("click", () => {
@@ -1013,7 +1013,7 @@ function showSection(section) {
       const petSpinCost = 5000;
 
       if (tokens < petSpinCost) {
-        alert("Du brauchst mindestens 5000 Tokens, um das Roulette zu drehen!");
+        alert("You need at least 5k tokens, for a Roll");
         return;
       }
 
@@ -1040,7 +1040,7 @@ function showSection(section) {
       } else {
         resetPetState();
         $("rouletteResult").textContent =
-          "😢 Kein Pet diesmal! Versuch es erneut.";
+          "😢 No Pet this time, roll another one.";
 
         update();
         savePlayerGame();
@@ -1051,7 +1051,7 @@ function showSection(section) {
       petMultiplier = multiplier;
 
       $("rouletteResult").innerHTML = `
-        🎉 Neues Pet gewonnen!<br><br>
+        🎉 New Pet!<br><br>
         ${rarity}<br>
         Multiplikator: ×${multiplier}
       `;
@@ -1066,7 +1066,7 @@ function showSection(section) {
   } else if (section === "skins") {
     content.innerHTML = `
       <h2>🎨 Skins</h2>
-      <p>Skins kosten jeweils <strong>100000</strong> Tokens.</p>
+      <p>Every Skin cost <strong>100000</strong> Tokens.</p>
       <div id="skinsContainer"></div>
     `;
 
@@ -1086,20 +1086,20 @@ function showSection(section) {
 
     content.innerHTML = `
       <h2>📜 Quest</h2>
-      <p>Ziel: <strong>${currentTarget.toLocaleString()}</strong> Klicks</p>
-      <p>Fortschritt: <strong id="questProgress">${currentProgress.toLocaleString()}</strong> / <strong>${currentTarget.toLocaleString()}</strong></p>
-      <p>Verbleibende Zeit: <strong id="questTime">${formatQuestTime(remaining)}</strong></p>
-      <p id="questStatus" style="margin-top: 12px; font-size: 13px; opacity: 0.9;">Quest läuft…</p>
-      <p style="margin-top: 12px; font-size: 12px; opacity: 0.8;">Die Quest wird alle 2 Stunden neu geladen.</p>
+      <p>Goal: <strong>${currentTarget.toLocaleString()}</strong> Klicks</p>
+      <p>Progress: <strong id="questProgress">${currentProgress.toLocaleString()}</strong> / <strong>${currentTarget.toLocaleString()}</strong></p>
+      <p>Time: <strong id="questTime">${formatQuestTime(remaining)}</strong></p>
+      <p id="questStatus" style="margin-top: 12px; font-size: 13px; opacity: 0.9;">Quest going…</p>
+      <p style="margin-top: 12px; font-size: 12px; opacity: 0.8;">Quest resets every 2 hours.</p>
     `;
 
     const questStatus = $("questStatus");
     if (questStatus && quest) {
       if (quest.completed) {
         const rem = Math.max(0, quest.expiresAt - Date.now());
-        questStatus.textContent = `Quest abgeschlossen. Nächste Quest in ${formatQuestTime(rem)}.`;
+        questStatus.textContent = `Quest done. Next Quest in ${formatQuestTime(rem)}.`;
       } else {
-        questStatus.textContent = "Quest läuft…";
+        questStatus.textContent = "Quest going…";
       }
     }
 
@@ -1131,13 +1131,13 @@ if ($("logoutButton")) {
     try {
       await savePlayerGame();
       await signOut(auth);
-      message("Du wurdest abgemeldet.");
+      message("Loged out.");
     } catch (error) {
       console.error("Abmeldefehler:", error);
 
       if ($("saveStatus")) {
         $("saveStatus").textContent =
-          "Abmelden fehlgeschlagen: " + error.code;
+          "Log out error: " + error.code;
       }
     }
   });
