@@ -337,7 +337,7 @@ async function renderLeaderboard() {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      listEl.innerHTML = "<li>No quests</li>";
+      listEl.innerHTML = "<li>No Quests</li>";
       return;
     }
 
@@ -941,7 +941,7 @@ function showSection(section) {
           tokens -= upgradeCost;
           // slower, smoother progression: small multiplicative growth
           power *= 1.15; // +15% power per upgrade
-          upgradeCost = Math.max(Math.floor(upgradeCost * 1.5), upgradeCost + 1);
+          upgradeCost = Math.max( Math.floor(upgradeCost * 1.5), upgradeCost + 1 );
 
           update();
           savePlayerGame();
@@ -999,11 +999,11 @@ function showSection(section) {
       </button>
 
       <h3>Rarities</h3>
-      <p>🔵 Gojo: 50% — ×1.2</p>
-      <p>🟣 Marin: 20% — ×2</p>
-      <p>🟡 Alya: 15% — ×4</p>
-      <p>🔴 Futaro: 7% — ×6</p>
-      <p>😢 No Pet: 8%</p>
+      <p>🔵 Gojo: 50 % — ×1,2</p>
+      <p>🟣 Marin: 20 % — ×2</p>
+      <p>🟡 Alya: 15 % — ×4</p>
+      <p>🔴 Futaro: 7 % — ×6</p>
+      <p>😢 No Pet: 8 %</p>
     `;
 
     $("spinRoulette").addEventListener("click", () => {
@@ -1066,7 +1066,7 @@ function showSection(section) {
   } else if (section === "skins") {
     content.innerHTML = `
       <h2>🎨 Skins</h2>
-      <p>Every skin costs <strong>100000</strong> Tokens.</p>
+      <p>Every Skin costs <strong>100000</strong> Tokens.</p>
       <div id="skinsContainer"></div>
     `;
 
@@ -1086,7 +1086,7 @@ function showSection(section) {
 
     content.innerHTML = `
       <h2>📜 Quest</h2>
-      <p>Goal: <strong>${currentTarget.toLocaleString()}</strong> clicks</p>
+      <p>Goal: <strong>${currentTarget.toLocaleString()}</strong> Clicks</p>
       <p>Progress: <strong id="questProgress">${currentProgress.toLocaleString()}</strong> / <strong>${currentTarget.toLocaleString()}</strong></p>
       <p>Time: <strong id="questTime">${formatQuestTime(remaining)}</strong></p>
       <p id="questStatus" style="margin-top: 12px; font-size: 13px; opacity: 0.9;">Quest in progress…</p>
@@ -1097,7 +1097,7 @@ function showSection(section) {
     if (questStatus && quest) {
       if (quest.completed) {
         const rem = Math.max(0, quest.expiresAt - Date.now());
-        questStatus.textContent = `Quest completed. Next quest in ${formatQuestTime(rem)}.`;
+        questStatus.textContent = `Quest completed. Next Quest in ${formatQuestTime(rem)}.`;
       } else {
         questStatus.textContent = "Quest in progress…";
       }
