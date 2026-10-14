@@ -48,6 +48,8 @@ let upgradeCost = 10;
 let petMultiplier = 1;
 let petRarity = "Kein Pet";
 let username = "";
+let rebirths = 0;
+let rebirthPowerBonus = 1;
 
 let ownedSkins = [];
 let equippedSkin = null;
@@ -117,6 +119,8 @@ let lastPublicProfileTokens = 0;
 const SAVE_DEBOUNCE_MS = 2000;
 const PUBLIC_PROFILE_SAVE_INTERVAL_MS = 5 * 60 * 1000;
 const PUBLIC_PROFILE_TOKEN_THRESHOLD = 100;
+const REBIRTH_BASE_COST = 100000;
+const REBIRTH_BONUS_PER_REBIRTH = 0.5;
 
 // ========================================
 // HILFSFUNKTIONEN
@@ -127,6 +131,14 @@ function message(text) {
   if (element) element.textContent = text;
 }
 
+function getRebirthCost() {
+  return Math.floor(REBIRTH_BASE_COST * Math.pow(2.5, rebirths));
+}
+
+function getEffectivePower() {
+  return power * petMultiplier * rebirthPowerBonus;
+}
+
 function update() {
   if ($("tokens")) {
     $("tokens").textContent = Math.floor(tokens);
@@ -134,7 +146,17 @@ function update() {
 
   if ($("power")) {
     $("power").textContent = Number(
-      (power * petMultiplier).toFixed(2)
+      (getEffectivePower()).toFixed(2)
+    );
+  }
+
+  if ($("rebirthCount")) {
+    $("rebirthCount").textContent = rebirths;
+  }
+
+  if ($("rebirthBonusValue")) {
+    $("rebirthBonusValue").textContent = Number(
+      rebirthPowerBonus.toFixed(2)
     );
   }
 }
@@ -158,7 +180,9 @@ function defaultPlayerData(name) {
     petRarity: "Kein Pet",
     ownedSkins: [],
     equippedSkin: null,
-    quest: null
+    quest: null,
+    rebirths: 0,
+    rebirthPowerBonus: 1
   };
 }
 
@@ -626,6 +650,10 @@ onAuthStateChanged(auth, async user => {
     petRarity = data.petRarity || "Kein Pet";
     ownedSkins = Array.isArray(data.ownedSkins) ? data.ownedSkins : [];
     equippedSkin = data.equippedSkin || null;
+    rebirths = Number.isFinite(data.rebirths) ? data.rebirths : 0;
+    rebirthPowerBonus = Number.isFinite(data.rebirthPowerBonus)
+      ? data.rebirthPowerBonus
+      : 1 + rebirths * REBIRTH_BONUS_PER_REBIRTH;
 
     if (data.quest) {
       quest = {
@@ -697,6 +725,8 @@ function savePlayerGame() {
         ownedSkins,
         equippedSkin,
         quest,
+        rebirths,
+        rebirthPowerBonus,
         savedAt: Date.now()
       })
     );
@@ -724,7 +754,9 @@ function savePlayerGame() {
         petRarity,
         ownedSkins,
         equippedSkin,
-        quest
+        quest,
+        rebirths,
+        rebirthPowerBonus
       };
 
       await setDoc(
@@ -783,6 +815,47 @@ function savePlayerGame() {
 }
 
 // ========================================
+// REBIRTH
+// ========================================
+
+function performRebirth() {
+  if (!ready || !auth.currentUser) return;
+
+  const cost = getRebirthCost();
+
+  if (tokens < cost) {
+    alert(`Du brauchst mindestens ${cost.toLocaleString()} Tokens, um einen Rebirth zu machen.`);
+    return;
+  }
+
+  tokens = 0;
+  power = 0.1;
+  upgradeCost = 10;
+  petMultiplier = 1;
+  petRarity = "Kein Pet";
+  ownedSkins = [];
+  equippedSkin = null;
+  quest = null;
+  rebirths += 1;
+  rebirthPowerBonus = 1 + rebirths * REBIRTH_BONUS_PER_REBIRTH;
+
+  resetPetState();
+  applySkin(null);
+
+  if (questTimer) clearTimeout(questTimer);
+  if (questRefreshInterval) clearInterval(questRefreshInterval);
+  questRefreshInterval = null;
+
+  if ($("questStatus")) {
+    $("questStatus").textContent = "Rebirth erfolgreich! Neue Quest startet beim nächsten Laden.";
+  }
+
+  update();
+  savePlayerGame();
+  showSection("shop");
+}
+
+// ========================================
 // KLICK-BUTTON
 // ========================================
 
@@ -791,7 +864,7 @@ if ($("clickButton")) {
     if (!ready || !auth.currentUser) return;
 
     tokens = Number(
-      (tokens + power * petMultiplier).toFixed(2)
+      (tokens + getEffectivePower()).toFixed(2)
     );
 
     if (quest && !quest.completed) {
@@ -841,14 +914,20 @@ function showSection(section) {
   if (!content) return;
 
   if (section === "shop") {
+    const rebirthCost = getRebirthCost();
+
     content.innerHTML = `
       <h2>Shop 🛒</h2>
       <p>
         Upgrade kostet
         <strong>${upgradeCost}</strong> Tokens.
       </p>
-      <p>Deine Klickstärke: ${(power * petMultiplier).toFixed(2)}</p>
+      <p>Deine Klickstärke: ${(getEffectivePower()).toFixed(2)}</p>
+      <p>Rebirths: <strong id="rebirthCount">${rebirths}</strong></p>
+      <p>Rebirth-Bonus: ×<strong id="rebirthBonusValue">${rebirthPowerBonus.toFixed(2)}</strong></p>
+      <p id="rebirthInfo">Nächster Rebirth: ${rebirthCost.toLocaleString()} Tokens</p>
       <button id="buyUpgrade">Upgrade kaufen</button>
+      <button id="doRebirth" style="margin-left:8px;">Rebirth</button>
       <button id="openSkins" style="margin-left:8px;">Skins ansehen</button>
       <div id="shopSkinsContainer" style="margin-top:16px; display:none;"></div>
     `;
@@ -873,6 +952,11 @@ function showSection(section) {
           );
         }
       });
+    }
+
+    const rebirthBtn = $("doRebirth");
+    if (rebirthBtn) {
+      rebirthBtn.addEventListener("click", performRebirth);
     }
 
     const openSkinsBtn = $("openSkins");
