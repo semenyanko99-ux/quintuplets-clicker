@@ -38,7 +38,7 @@ const db = getFirestore(app);
 const $ = id => document.getElementById(id);
 
 // ========================================
-// SPIELVARIABLEN (BALANCED)
+// GAME VARIABLES (BALANCED)
 // ========================================
 
 // Lower base power so progression is slower
@@ -46,7 +46,7 @@ let tokens = 0;
 let power = 0.1; // each click gives 0.1 tokens initially
 let upgradeCost = 10;
 let petMultiplier = 1;
-let petRarity = "Kein Pet";
+let petRarity = "No Pet";
 let username = "";
 let rebirths = 0;
 let rebirthPowerBonus = 1;
@@ -123,7 +123,7 @@ const REBIRTH_BASE_COST = 100000;
 const REBIRTH_BONUS_PER_REBIRTH = 0.5;
 
 // ========================================
-// HILFSFUNKTIONEN
+// HELPER FUNCTIONS
 // ========================================
 
 function message(text) {
@@ -217,7 +217,7 @@ function applySkin(skinId) {
 
   if (!selectedSkin) {
     buttonImage.src = "Volume_7_clean_cover_art.webp";
-    buttonImage.alt = "Standard Bild";
+    buttonImage.alt = "Default image";
     clickButton.style.border = "5px solid #ff80bd";
     clickButton.style.backgroundImage = "IMG_0013.jpeg";
     clickButton.style.backgroundSize = "";
@@ -274,7 +274,7 @@ function renderSkinsUI(container) {
     info.style.flex = "1";
     info.innerHTML = `
       <strong>${skin.name}</strong><br>
-      <span>Preis: ${skin.price}</span>
+      <span>Price: ${skin.price}</span>
     `;
 
     const action = document.createElement("button");
@@ -300,10 +300,10 @@ function renderSkinsUI(container) {
         renderSkinsUI(container);
       });
     } else if (isEquipped) {
-      action.textContent = "Ausgerüstet";
+      action.textContent = "Equipped";
       action.disabled = true;
     } else {
-      action.textContent = "Anlegen";
+      action.textContent = "Equip";
       action.addEventListener("click", async () => {
         if (!ready || !auth.currentUser) return;
 
@@ -337,14 +337,14 @@ async function renderLeaderboard() {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      listEl.innerHTML = "<li>No Quests</li>";
+      listEl.innerHTML = "<li>No quests</li>";
       return;
     }
 
     listEl.innerHTML = snapshot.docs
       .map((docSnap, index) => {
         const data = docSnap.data();
-        const usernameValue = escapeHtml(data.username || "Spieler");
+        const usernameValue = escapeHtml(data.username || "Player");
         const scoreValue = Number.isFinite(data.tokens)
           ? Math.floor(data.tokens)
           : 0;
@@ -366,7 +366,7 @@ async function renderLeaderboard() {
       const err = document.createElement("li");
       err.style.fontSize = "12px";
       err.style.opacity = "0.8";
-      err.textContent = le"Error: " + error.code;
+      err.textContent = "Error: " + error.code;
       listEl.appendChild(err);
     }
   }
@@ -463,7 +463,7 @@ function scheduleSave(immediate = false) {
 }
 
 // ========================================
-// REGISTRIEREN
+// REGISTER
 // ========================================
 
 if ($("registerButton")) {
@@ -475,7 +475,7 @@ if ($("registerButton")) {
 
     if (!validUsername(name)) {
       message(
-        "Nickname: 3–16 Letters, Numbers or _."
+        "Nickname: 3–16 letters, numbers, or _."
       );
       return;
     }
@@ -487,7 +487,7 @@ if ($("registerButton")) {
 
     busy = true;
     $("registerButton").disabled = true;
-    message("Konto wird erstellt …");
+    message("Creating account…");
 
     try {
       const credential = await createUserWithEmailAndPassword(
@@ -504,15 +504,15 @@ if ($("registerButton")) {
       message("Account created!");
 
     } catch (error) {
-      console.error("Registrierungsfehler:", error);
+      console.error("Registration error:", error);
 
       if (error.code === "auth/email-already-in-use") {
-        message("There are a user with same Nickname.");
+        message("There is already a user with this nickname.");
       } else if (
         error.code === "auth/operation-not-allowed"
       ) {
         message(
-          "Aktiviere E-Mail/Passwort in Firebase Authentication."
+          "Enable email/password sign-in in Firebase Authentication."
         );
       } else {
         message(
@@ -528,7 +528,7 @@ if ($("registerButton")) {
 }
 
 // ========================================
-// ANMELDEN
+// SIGN IN
 // ========================================
 
 if ($("authForm")) {
@@ -551,7 +551,7 @@ if ($("authForm")) {
     }
 
     busy = true;
-    message("Log in is ongoing...");
+    message("Signing in...");
 
     try {
       await signInWithEmailAndPassword(
@@ -560,26 +560,26 @@ if ($("authForm")) {
         password
       );
 
-      message("Log in successful!");
+      message("Login successful!");
 
     } catch (error) {
-      console.error("Log in error:", error);
+      console.error("Login error:", error);
 
       if (
         error.code === "auth/invalid-credential" ||
         error.code === "auth/wrong-password" ||
         error.code === "auth/user-not-found"
       ) {
-        message("Nickname or password are wrong.");
+        message("Nickname or password is incorrect.");
       } else if (
         error.code === "auth/operation-not-allowed"
       ) {
         message(
-          "E-Mail/Passwort-Anmeldung ist in Firebase nicht aktiviert."
+          "Email/password sign-in is not enabled in Firebase."
         );
       } else {
         message(
-          "Log in error: " + error.code
+          "Login error: " + error.code
         );
       }
 
@@ -590,7 +590,7 @@ if ($("authForm")) {
 }
 
 // ========================================
-// SPIELSTAND LADEN
+// LOAD GAME STATE
 // ========================================
 
 onAuthStateChanged(auth, async user => {
@@ -626,7 +626,7 @@ onAuthStateChanged(auth, async user => {
         defaultPlayerData(
           user.email
             ? user.email.split("@")[0]
-            : "Spieler"
+            : "Player"
         )
       );
 
@@ -647,7 +647,7 @@ onAuthStateChanged(auth, async user => {
       ? data.petMultiplier
       : 1;
 
-    petRarity = data.petRarity || "Kein Pet";
+    petRarity = data.petRarity || "No Pet";
     ownedSkins = Array.isArray(data.ownedSkins) ? data.ownedSkins : [];
     equippedSkin = data.equippedSkin || null;
     rebirths = Number.isFinite(data.rebirths) ? data.rebirths : 0;
@@ -691,7 +691,7 @@ onAuthStateChanged(auth, async user => {
     ready = true;
 
   } catch (error) {
-    console.error("Ladefehler:", error);
+    console.error("Load error:", error);
 
     if ($("saveStatus")) {
       $("saveStatus").textContent =
@@ -701,8 +701,8 @@ onAuthStateChanged(auth, async user => {
 });
 
 // ========================================
-// SPIELSTAND SPEICHERN
-// Diese Funktion darf nur einmal existieren!
+// SAVE GAME STATE
+// This function may exist only once!
 // ========================================
 
 function savePlayerGame() {
@@ -824,7 +824,7 @@ function performRebirth() {
   const cost = getRebirthCost();
 
   if (tokens < cost) {
-    alert(`You need at least ${cost.toLocaleString()} Tokens, for a Rebirth.`);
+    alert(`You need at least ${cost.toLocaleString()} Tokens for a Rebirth.`);
     return;
   }
 
@@ -847,7 +847,7 @@ function performRebirth() {
   questRefreshInterval = null;
 
   if ($("questStatus")) {
-    $("questStatus").textContent = "Rebirth successful! New quest starts on the next load.";
+    $("questStatus").textContent = "Rebirth successful! A new quest starts on the next load.";
   }
 
   update();
@@ -856,7 +856,7 @@ function performRebirth() {
 }
 
 // ========================================
-// KLICK-BUTTON
+// CLICK BUTTON
 // ========================================
 
 if ($("clickButton")) {
@@ -881,7 +881,7 @@ if ($("clickButton")) {
 
         const status = $("questStatus");
         if (status) {
-          status.textContent = `Quest done! +15% Click Multiplier`;
+          status.textContent = `Quest complete! +15% Click Multiplier`;
         }
 
         // persist new state (quest + power)
@@ -896,7 +896,7 @@ if ($("clickButton")) {
 }
 
 // ========================================
-// MENÜ-BUTTONS
+// MENU BUTTONS
 // ========================================
 
 document.querySelectorAll("[data-section]").forEach(button => {
@@ -906,7 +906,7 @@ document.querySelectorAll("[data-section]").forEach(button => {
 });
 
 // ========================================
-// SHOP, PETS, SKINS UND QUESTS
+// SHOP, PETS, SKINS, AND QUESTS
 // ========================================
 
 function showSection(section) {
@@ -922,11 +922,11 @@ function showSection(section) {
         Upgrade cost
         <strong>${upgradeCost}</strong> Tokens.
       </p>
-      <p>Deine Klickstärke: ${(getEffectivePower()).toFixed(2)}</p>
+      <p>Your click power: ${(getEffectivePower()).toFixed(2)}</p>
       <p>Rebirths: <strong id="rebirthCount">${rebirths}</strong></p>
-      <p>Rebirth-Bonus: ×<strong id="rebirthBonusValue">${rebirthPowerBonus.toFixed(2)}</strong></p>
+      <p>Rebirth bonus: ×<strong id="rebirthBonusValue">${rebirthPowerBonus.toFixed(2)}</strong></p>
       <p id="rebirthInfo">Next Rebirth: ${rebirthCost.toLocaleString()} Tokens</p>
-      <button id="buyUpgrade">Upgrade kaufen</button>
+      <button id="buyUpgrade">Buy Upgrade</button>
       <button id="doRebirth" style="margin-left:8px;">Rebirth</button>
       <button id="openSkins" style="margin-left:8px;">Skins</button>
       <div id="shopSkinsContainer" style="margin-top:16px; display:none;"></div>
@@ -941,7 +941,7 @@ function showSection(section) {
           tokens -= upgradeCost;
           // slower, smoother progression: small multiplicative growth
           power *= 1.15; // +15% power per upgrade
-          upgradeCost = Math.max( Math.floor(upgradeCost * 1.5), upgradeCost + 1 );
+          upgradeCost = Math.max(Math.floor(upgradeCost * 1.5), upgradeCost + 1);
 
           update();
           savePlayerGame();
@@ -974,13 +974,13 @@ function showSection(section) {
 
   } else if (section === "pets") {
     content.innerHTML = `
-      <h2>🎰 Pet-Roulette</h2>
+      <h2>🎰 Pet Roulette</h2>
 
       <p>Your Pet:
         <strong id="currentPet">${petRarity}</strong>
       </p>
 
-      <p>Your pet Multiplier:
+      <p>Your pet multiplier:
         ×<span id="currentMultiplier">${petMultiplier}</span>
       </p>
 
@@ -998,12 +998,12 @@ function showSection(section) {
         🎰 Roll!
       </button>
 
-      <h3>Seltenheiten</h3>
-      <p>🔵 Gojo: 50 % — ×1,2</p>
-      <p>🟣 Marin: 20 % — ×2</p>
-      <p>🟡 Alya: 15 % — ×4</p>
-      <p>🔴 Futaro: 7 % — ×6</p>
-      <p>😢 No Pet: 8 %</p>
+      <h3>Rarities</h3>
+      <p>🔵 Gojo: 50% — ×1.2</p>
+      <p>🟣 Marin: 20% — ×2</p>
+      <p>🟡 Alya: 15% — ×4</p>
+      <p>🔴 Futaro: 7% — ×6</p>
+      <p>😢 No Pet: 8%</p>
     `;
 
     $("spinRoulette").addEventListener("click", () => {
@@ -1013,7 +1013,7 @@ function showSection(section) {
       const petSpinCost = 5000;
 
       if (tokens < petSpinCost) {
-        alert("You need at least 5k tokens, for a Roll");
+        alert("You need at least 5k tokens to roll");
         return;
       }
 
@@ -1040,7 +1040,7 @@ function showSection(section) {
       } else {
         resetPetState();
         $("rouletteResult").textContent =
-          "😢 No Pet this time, roll another one.";
+          "😢 No Pet this time, roll again.";
 
         update();
         savePlayerGame();
@@ -1053,7 +1053,7 @@ function showSection(section) {
       $("rouletteResult").innerHTML = `
         🎉 New Pet!<br><br>
         ${rarity}<br>
-        Multiplikator: ×${multiplier}
+        Multiplier: ×${multiplier}
       `;
 
       $("currentPet").textContent = petRarity;
@@ -1066,7 +1066,7 @@ function showSection(section) {
   } else if (section === "skins") {
     content.innerHTML = `
       <h2>🎨 Skins</h2>
-      <p>Every Skin cost <strong>100000</strong> Tokens.</p>
+      <p>Every skin costs <strong>100000</strong> Tokens.</p>
       <div id="skinsContainer"></div>
     `;
 
@@ -1086,20 +1086,20 @@ function showSection(section) {
 
     content.innerHTML = `
       <h2>📜 Quest</h2>
-      <p>Goal: <strong>${currentTarget.toLocaleString()}</strong> Klicks</p>
+      <p>Goal: <strong>${currentTarget.toLocaleString()}</strong> clicks</p>
       <p>Progress: <strong id="questProgress">${currentProgress.toLocaleString()}</strong> / <strong>${currentTarget.toLocaleString()}</strong></p>
       <p>Time: <strong id="questTime">${formatQuestTime(remaining)}</strong></p>
-      <p id="questStatus" style="margin-top: 12px; font-size: 13px; opacity: 0.9;">Quest going…</p>
-      <p style="margin-top: 12px; font-size: 12px; opacity: 0.8;">Quest resets every 2 hours.</p>
+      <p id="questStatus" style="margin-top: 12px; font-size: 13px; opacity: 0.9;">Quest in progress…</p>
+      <p style="margin-top: 12px; font-size: 12px; opacity: 0.8;">Quests reset every 2 hours.</p>
     `;
 
     const questStatus = $("questStatus");
     if (questStatus && quest) {
       if (quest.completed) {
         const rem = Math.max(0, quest.expiresAt - Date.now());
-        questStatus.textContent = `Quest done. Next Quest in ${formatQuestTime(rem)}.`;
+        questStatus.textContent = `Quest completed. Next quest in ${formatQuestTime(rem)}.`;
       } else {
-        questStatus.textContent = "Quest going…";
+        questStatus.textContent = "Quest in progress…";
       }
     }
 
@@ -1123,7 +1123,7 @@ function showSection(section) {
 }
 
 // ========================================
-// ABMELDEN
+// LOG OUT
 // ========================================
 
 if ($("logoutButton")) {
@@ -1131,13 +1131,13 @@ if ($("logoutButton")) {
     try {
       await savePlayerGame();
       await signOut(auth);
-      message("Loged out.");
+      message("Logged out.");
     } catch (error) {
-      console.error("Abmeldefehler:", error);
+      console.error("Logout error:", error);
 
       if ($("saveStatus")) {
         $("saveStatus").textContent =
-          "Log out error: " + error.code;
+          "Logout error: " + error.code;
       }
     }
   });
